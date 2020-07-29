@@ -1,15 +1,15 @@
 <template>
   <div>
-    <home></home>
+    <login></login>
   </div>
 </template>
 
 <script>
-import Home from './views/Home.vue';
+import Login from './views/Login.vue';
 
 export default {
   components: {
-    Home
+    Login
   }
 }
 </script>
