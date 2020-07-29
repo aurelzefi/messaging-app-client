@@ -1,6 +1,6 @@
 <template>
   <div>
-    This is the home page.
+    This is the register page.
   </div>
 </template>
 

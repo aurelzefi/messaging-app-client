@@ -1,11 +1,19 @@
 <template>
-  <div id="app">
-    <h1 class="text-4xl font-bold text-center text-blue-500">Hello World!</h1>
+  <div>
+    <home></home>
   </div>
 </template>
 
+<script>
+import Home from './views/Home.vue';
+
+export default {
+  components: {
+    Home
+  }
+}
+</script>
+
 <style>
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import './assets/css/app.css';
 </style>

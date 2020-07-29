@@ -1,11 +1,11 @@
 <template>
   <div>
-    This is the home page.
+    This is an example component.
   </div>
 </template>
 
 <script>
 export default {
-  //
+  
 }
 </script>
