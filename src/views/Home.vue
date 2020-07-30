@@ -1,11 +1,39 @@
 <template>
   <div>
-    This is the home page.
+    <div>
+      <div>
+        
+      </div>
+
+      <div>
+      
+      </div>
+
+      <div>
+      
+      </div>      
+    </div>
+
+    <div>
+      <div>
+        
+      </div>
+
+      <div>
+      
+      </div>
+
+      <div>
+      
+      </div>  
+    </div>
   </div>
 </template>
 
 <script>
 export default {
-  //
+  mounted() {
+    
+  },
 }
 </script>
