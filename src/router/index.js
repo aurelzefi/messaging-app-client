@@ -41,7 +41,16 @@ const router = new VueRouter({
 router.beforeEach((to, from, next) => {
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (localStorage.getItem('token')) {
-      next()
+      if (Vue.prototype.$bus.user) {
+        next()
+      } else {
+        Vue.prototype.$http.get('/api/user')
+          .then(response => {
+            Vue.prototype.$bus.user = response.data
+
+            next()
+          })
+      }
     } else {
       next({
         path: '/login'

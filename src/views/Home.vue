@@ -33,7 +33,7 @@
 <script>
 export default {
   mounted() {
-    
+    console.log(this.$bus.user)
   },
 }
 </script>

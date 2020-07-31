@@ -5,7 +5,7 @@ import router from './router'
 
 Vue.config.productionTip = false
 
-let headers = {}
+const headers = {}
 
 if (localStorage.getItem('token')) {
   headers.Authorization = `Bearer ${localStorage.getItem('token')}`
@@ -16,17 +16,32 @@ Vue.prototype.$http = axios.create({
   headers
 })
 
+Vue.prototype.$bus = new Vue()
+
 Vue.mixin({
   methods: {
     /**
      * Format the given errors.
      */
     formatErrors(errors) {
+      const items = {}
+
       for (let key in errors) {
-        errors[key] = errors[key][0]
+        items[key] = errors[key][0]
       }
 
-      return errors
+      return items
+    },
+
+    /**
+     * Handle the after authentication actions.
+     */
+    handleAfterAuth(token) {
+      localStorage.setItem('token', token)
+
+      this.$http.defaults.headers.common.Authorization = `Bearer ${token}`
+
+      this.$router.push('/home')
     },
   },
 })

@@ -17,6 +17,8 @@
 
       <div>
         <button type="button" @click="login">Login</button>
+
+        Don't have an account? <router-link to="/register">Register</router-link>
       </div>
     </form>
   </div>
@@ -35,7 +37,7 @@ export default {
       },
 
       errors: {}
-    };
+    }
   },
 
   mounted() {
@@ -46,10 +48,10 @@ export default {
     login() {
       this.$http.post('/api/sanctum/token', this.form)
         .then(response => {
-          console.log(response)
+          this.handleAfterAuth(response.data.token)
         })
         .catch(error => {
-          console.log(this.formatErrors(error.response.data.errors))
+          this.errors = this.formatErrors(error.response.data.errors)
         })
     },
   },
