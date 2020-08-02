@@ -2,19 +2,17 @@ import Vue from 'vue'
 import App from './App.vue'
 import axios from 'axios'
 import router from './router'
+import moment from 'moment'
 
 Vue.config.productionTip = false
 
-const headers = {}
+const API_URL = 'http://messaging-app-api.test'
 
 if (localStorage.getItem('token')) {
-  headers.Authorization = `Bearer ${localStorage.getItem('token')}`
+  axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`
 }
 
-Vue.prototype.$http = axios.create({ 
-  baseURL: 'http://messaging-app-api.test', 
-  headers
-})
+Vue.prototype.$http = axios.create({ baseURL: API_URL })
 
 Vue.prototype.$bus = new Vue()
 
@@ -43,6 +41,31 @@ Vue.mixin({
 
       this.$router.push('/home')
     },
+
+    /** 
+     * Get the full URL for the given picture.
+    */
+    picture(name) {
+      return `${API_URL}/pictures/${name}`
+    },
+
+    /**
+     * Get the full URL for the given file.
+     */
+    file(id) {
+      return `${API_URL}/api/files/${id}?api_token=${localStorage.getItem('token')}`
+    },
+
+    /**
+     * Truncate the given string.
+     */
+    truncate(string, size = 100) {
+      return string.length > size ? `${string.substr(0, size)}...` : string;
+    },
+
+    formatDate(timestamp) {
+      return moment(timestamp).format('YYYY-MM-DD HH:mm');
+    }
   },
 })
 
