@@ -19,7 +19,7 @@
         </ul>
       </div>
 
-      <div class="mt-16 border-t-2 overflow-auto">
+      <div class="mt-16 border-t-2 overflow-auto" style="height: calc(100% - 4em)">
         <ul class="" v-if="chats.length">
           <li class="flex justify-between items-center px-3 py-5 border-b-2" v-for="chat in chats" :key="chat.id" @click="getChat(chat)">
             <img class="rounded-full h-12 w-12" :src="picture(chatUser(chat).picture)">
@@ -71,7 +71,7 @@
     <div class="w-2/3 my-auto text-center" v-else>
       <img class="mx-auto" src="./../assets/logo.png">
 
-      No chats open.
+      Empty space here...
     </div>
   </div>
 </template>
