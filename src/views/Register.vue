@@ -35,7 +35,7 @@
 </template>
 
 <script>
-import { remote } from 'electron'
+import os from 'os'
 
 export default {
   data() {
@@ -45,7 +45,7 @@ export default {
         email: '',
         password: '',
         password_confirmation: '',
-        device_name: remote.getCurrentWindow().webContents.session.getUserAgent()
+        device_name: os.hostname()
       },
 
       errors: {}

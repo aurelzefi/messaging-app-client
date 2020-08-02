@@ -1,11 +1,11 @@
 <template>
-  <div class="flex">
+  <div class="flex h-screen">
     <div class="w-1/3 border-r-2">
-      <div class="fixed bg-white w-1/3 border-r-2">
+      <div class="w-1/3 fixed bg-white border-r-2">
         <ul class="flex items-center p-2 justify-end">
           <li class="mr-6">
             <a>
-              <img class="rounded-full h-12 w-12" :src="picture($bus.user.picture)">
+              <img class="h-12 w-12 rounded-full" :src="picture($bus.user.picture)">
             </a>
           </li>
 
@@ -19,10 +19,10 @@
         </ul>
       </div>
 
-      <div class="mt-16 border-t-2 overflow-auto" style="height: calc(100% - 4em)">
-        <ul class="" v-if="chats.length">
-          <li class="flex justify-between items-center px-3 py-5 border-b-2" v-for="chat in chats" :key="chat.id" @click="getChat(chat)">
-            <img class="rounded-full h-12 w-12" :src="picture(chatUser(chat).picture)">
+      <div class="mt-16 border-t-2 overflow-auto" style="height: calc(100% - 4rem)">
+        <ul v-if="chats.length">
+          <li class="px-3 py-5 flex justify-between items-center border-b-2" v-for="chat in chats" :key="chat.id" @click="getChat(chat)">
+            <img class="h-12 w-12 rounded-full" :src="picture(chatUser(chat).picture)">
 
             <div class="ml-2">
               {{ chatUser(chat).name }}
@@ -40,8 +40,8 @@
       </div>
     </div>
 
-    <div class="w-2/3 h-full" v-if="activeChat">
-      <div class="fixed bg-white w-2/3 top-0">
+    <div class="w-2/3" v-if="activeChat">
+      <div class="w-2/3 fixed bg-white top-0">
         <div class="flex justify-between items-center p-2">
           <div class="flex items-center">
             <img class="rounded-full h-12 w-12" :src="picture(chatUser(activeChat).picture)">
@@ -55,7 +55,7 @@
         </div>
       </div>
 
-      <div class="h-full mt-16 overflow-auto border-t-2">
+      <div class="mt-16 overflow-auto border-t-2" style="height: calc(100% - 8rem)">
         <ul class="p-2" v-if="messages.length">
           <li class="w-2/3 p-2 mt-2 bg-green-200 rounded-md" :class="{ 'ml-auto': isSent(message) }" v-for="message in messages" :key="message.id">
             {{ message.content }}
@@ -63,8 +63,8 @@
         </ul>
       </div>
 
-      <form class="fixed bottom-0 p-3 w-2/3" @submit.prevent="sendMessage">
-        <input class="p-2 outline-none border-gray-500 border w-full rounded" type="text" v-model="form.content" placeholder="Type a message">
+      <form class="w-2/3 h-16 fixed flex items-center px-2 border-t-2" @submit.prevent="sendMessage">
+        <input class="w-full p-2 outline-none border-gray-500 border rounded" type="text" v-model="form.content" placeholder="Type a message">
       </form>
     </div>
 

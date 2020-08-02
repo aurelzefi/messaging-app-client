@@ -52,15 +52,11 @@ router.beforeEach((to, from, next) => {
           })
       }
     } else {
-      next({
-        path: '/login'
-      })
+      next({ path: '/login' })
     }
   } else {
     if (localStorage.getItem('token')) {
-      next({
-        path: '/home'
-      })
+      next({ path: '/home' })
     } else {
       next()
     }
