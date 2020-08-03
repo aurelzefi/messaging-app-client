@@ -236,7 +236,7 @@ export default {
      * Log the user out of the application.
      */
     logout() {
-      this.$http.delete(`/api/sanctum/token/${this.tokenId()}`)
+      this.$http.delete(`/api/tokens/${this.tokenId()}`)
         .then(() => {
           this.$echo.leave(`typing.${this.$bus.user.id}`)
           this.$echo.leave(`App.User.${this.$bus.user.id}`)

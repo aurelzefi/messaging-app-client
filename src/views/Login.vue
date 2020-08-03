@@ -46,7 +46,7 @@ export default {
 
   methods: {
     login() {
-      this.$http.post('/api/sanctum/token', this.form)
+      this.$http.post('/api/tokens', this.form)
         .then(response => {
           this.handleAfterAuth(response.data.token)
         })
