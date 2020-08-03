@@ -27,7 +27,8 @@
             <div class="ml-2">
               {{ chatUser(chat).name }}
 
-              {{ truncate(chat.content, 40) }}
+              <span v-if="chat.typing">Typing...</span>
+              <span v-else>{{ truncate(chat.content, 40) }}</span>
             
               <span>{{ formatDate(chat.created_at) }}</span>
             </div>
@@ -46,6 +47,7 @@
           <div class="flex items-center">
             <img class="rounded-full h-12 w-12" :src="picture(chatUser(activeChat).picture)">
             <span class="ml-2">{{ chatUser(activeChat).name }}</span>
+            <span v-if="activeChat.typing === true">Typing...</span>
           </div>
 
           <div>
@@ -55,16 +57,16 @@
         </div>
       </div>
 
-      <div class="mt-16 overflow-auto border-t-2" style="height: calc(100% - 8rem)">
+      <div ref="messages" class="mt-16 overflow-auto border-t-2" style="height: calc(100% - 8rem)">
         <ul class="p-2" v-if="messages.length">
-          <li class="w-2/3 p-2 mt-2 bg-green-200 rounded-md" :class="{ 'ml-auto': isSent(message) }" v-for="message in messages" :key="message.id">
+          <li class="w-2/3 p-2 mt-2 bg-green-200 rounded-md" :class="{ 'ml-auto': messageIsSent(message) }" v-for="message in messages" :key="message.id">
             {{ message.content }}
           </li>
         </ul>
       </div>
 
       <form class="w-2/3 h-16 fixed flex items-center px-2 border-t-2" @submit.prevent="sendMessage">
-        <input class="w-full p-2 outline-none border-gray-500 border rounded" type="text" v-model="form.content" placeholder="Type a message">
+        <input class="w-full p-2 outline-none border-gray-500 border rounded" type="text" v-model="form.content" @keyup="whisper" placeholder="Type a message">
       </form>
     </div>
 
@@ -78,34 +80,125 @@
 
 <script>
 export default {
+  /**
+   * The component's data.
+   */
   data() {
     return {
-      chats: [],
-
-      messages: [],
-
-      activeChat: null,
-
       form: {
         receiver_id: '',
         content: '',
         files: []
-      }
+      },
+
+      errors: [],
+      chats: [],
+      messages: [],
+      activeChat: null
     }
   },
 
+  /**
+   * Mount the component.
+   */
   mounted() {
     this.getChats()
+    
+    this.listenForTypings()
+    this.listenForMessages()
+  },
+
+  /**
+   * Update the component.
+   */
+  updated() {
+    if (this.messages.length) {
+      this.scrollToMessagesBottom()
+    }
   },
 
   methods: {
+    /**
+     * Get the chats.
+     */
     getChats() {
       this.$http.get('/api/chats')
         .then(response => {
           this.chats = response.data
+        
+          this.chats.forEach(chat => {
+            chat.typing = false
+          })
         })
     },
 
+    /**
+     * Listen for typings.
+    */
+    listenForTypings() {
+      this.$echo.private(`typing.${this.$bus.user.id}`)
+        .listenForWhisper('typing', (e) => {
+            let chat = this.chats.find(chat => {
+              return this.chatUser(chat).id === e.user.id
+            })
+
+            let key = this.chats.indexOf(chat)
+
+            chat.typing = true
+
+            this.$set(this.chats, key, chat)
+
+            setTimeout(() => {
+              chat.typing = false
+
+              this.$set(this.chats, key, chat)
+            }, 2000)
+        })
+    },
+
+    /**
+     * Listen for messages.
+     */
+    listenForMessages() {
+      var activeUser = this.activeUser()
+
+      this.$echo.private(`App.User.${this.$bus.user.id}`)
+        .listen('MessageSent', (e) => {
+          if (activeUser && activeUser.id === e.message.sender_id) {
+            this.messages.push(e.message)
+          }
+        })
+        .listen('MessageUnsent', (e) => {
+          if (activeUser && activeUser.id === e.message.sender_id) {
+            this.messages.splice(
+              this.messages.findIndex(m => m.id === e.message.id), 
+            )
+          }
+        })
+    },
+
+    /**
+     * Send a whisper that the user is typing.
+     */
+    whisper() {
+      this.$echo.private(`typing.${this.activeUser().id}`)
+        .whisper('typing', {
+          user: this.$bus.user
+        })
+    },
+
+    /**
+     * Scroll to the botton of the messages container.
+     */
+    scrollToMessagesBottom() {
+      let container = this.$refs.messages;
+
+      container.scrollTop = container.scrollHeight;
+    },
+
+    /**
+     * Get the messages for the given chat.
+     */
     getChat(chat) {
       this.activeChat = chat
       this.form.receiver_id = this.chatUser(chat).id;
@@ -116,12 +209,27 @@ export default {
         })
     },
 
-    chatUser(chat) {
-      return this.$bus.user.id === chat.sender.id ? chat.receiver : chat.sender;
+    /**
+     * Get the active user.
+     */
+    activeUser() {
+      if (this.activeChat) {
+        return this.chatUser(this.activeChat)
+      }
     },
 
-    isSent(message) {
-      return this.$bus.user.id === message.sender_id;
+    /**
+     * Get the user from the chat.
+     */
+    chatUser(chat) {
+      return this.$bus.user.id === chat.sender.id ? chat.receiver : chat.sender
+    },
+
+    /**
+     * Determine if the given message is sent.
+     */
+    messageIsSent(message) {
+      return this.$bus.user.id === message.sender_id
     },
 
     /**
@@ -130,6 +238,9 @@ export default {
     logout() {
       this.$http.delete(`/api/sanctum/token/${this.tokenId()}`)
         .then(() => {
+          this.$echo.leave(`typing.${this.$bus.user.id}`)
+          this.$echo.leave(`App.User.${this.$bus.user.id}`)
+
           this.$bus.user = null
           
           localStorage.removeItem('token')
@@ -140,21 +251,28 @@ export default {
         })
     },
 
+    /**
+     * Send a message.
+     */
     sendMessage() {
       const formData = new FormData()
       
       formData.append('content', this.form.content)
+      formData.append('receiver_id', this.form.receiver_id)
         
       this.form.files.forEach((file, key) => {
-        formData.append(`files[${key}]`, file);
+        formData.append(`files[${key}]`, file)
       });
 
       this.$http.post(`/api/messages`, formData)
         .then(response => {
-          console.log(response.data)
+          this.messages.push(response.data)
+
+          this.form.content = ''
+          this.form.files = []
         })
         .catch(error => {
-          console.log(error)
+          this.errors = this.formatErrors(error.response.data.errors)
         })
     },
 
@@ -169,14 +287,14 @@ export default {
      * Open the file browser to choose files.
      */
     openFileBrowser() {
-      this.$refs.files.click();
+      this.$refs.files.click()
     },
 
     /**
      * Add the chosen files to the form.
      */
     handleFiles() {
-      this.form.files = Object.values(this.$refs.files.files);
+      this.form.files = Object.values(this.$refs.files.files)
     },
   }
 }

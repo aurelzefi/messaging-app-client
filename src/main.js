@@ -3,6 +3,8 @@ import App from './App.vue'
 import axios from 'axios'
 import router from './router'
 import moment from 'moment'
+import Echo from 'laravel-echo'
+import Pusher from 'pusher-js'
 
 Vue.config.productionTip = false
 
@@ -15,6 +17,23 @@ if (localStorage.getItem('token')) {
 Vue.prototype.$http = axios.create({ baseURL: API_URL })
 
 Vue.prototype.$bus = new Vue()
+
+window.Pusher = Pusher
+
+Vue.prototype.$echo = new Echo({
+  broadcaster: 'pusher',
+  key: 'key',
+  forceTLS: false,
+  wsHost: window.location.hostname,
+  wsPort: 6001,
+  disableStats: true,
+  authEndpoint: `${API_URL}/api/broadcasting/auth`,
+  auth: {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('token')}`
+    }
+  },
+});
 
 Vue.mixin({
   methods: {
@@ -63,6 +82,9 @@ Vue.mixin({
       return string.length > size ? `${string.substr(0, size)}...` : string;
     },
 
+    /**
+     * Format the given date.
+     */
     formatDate(timestamp) {
       return moment(timestamp).format('YYYY-MM-DD HH:mm');
     }
