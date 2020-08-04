@@ -153,18 +153,17 @@ export default {
             })
 
             let chatUser = this.chatUser(chat)
-
             let key = this.chats.indexOf(chat)
 
-            this.chatUser(chat).typing = true
+            chatUser.typing = true
 
             this.$set(this.chats, key, chat)
 
-            setTimeout(() => {
+            chatUser.timeout = setTimeout(() => {
               chatUser.typing = false
 
               this.$set(this.chats, key, chat)
-            }, 2000)
+            }, 3000)
         })
     },
 
@@ -174,14 +173,36 @@ export default {
     listenForMessages() {
       this.$echo.private(`App.User.${this.$bus.user.id}`)
         .listen('MessageSent', (e) => {
-          if (this.activeUser && this.activeUser.id === e.message.sender_id) {
+          if (this.chatIsActive(e.message)) {
             this.messages.push(e.message)
-          } else {
-            new Notification(e.message.sender.name, {
-              body: e.message.content,
-              icon: this.picture(e.message.sender.picture)
-            })
+
+            e.message.unread_count = 1
+
+            this.readChat(e.message)
+
+            return
           }
+
+          new Notification(e.message.sender.name, {
+            body: e.message.content,
+            icon: this.picture(e.message.sender.picture)
+          })
+
+          let chat = this.chats.find(chat => {
+            return [chat.sender_id, chat.receiver_id].includes(e.message.sender_id)
+          })
+
+          let key = this.chats.indexOf(chat)
+
+          chat.unread_count++
+
+          e.message.unread_count = chat.unread_count
+
+          this.$set(this.chats, key, e.message)
+
+          this.chats.sort((a, b) => {
+            return a.id === e.message.id ? -1 : b === e.message.id ? 1 : 0;
+          });
         })
         .listen('MessageUnsent', (e) => {
           if (this.activeUser && this.activeUser.id === e.message.sender_id) {
@@ -218,17 +239,21 @@ export default {
       this.activeUser = this.chatUser(chat)
       this.form.receiver_id = this.chatUser(chat).id
 
-      this.$http.get(`/api/chats/${this.chatUser(chat).id}`)
+      this.$http.get(`/api/chats/${this.activeUser.id}`)
         .then(response => {
           this.messages = response.data
 
-          if (chat.unread_count > 0) {
-            this.$http.put(`/api/chats/${this.activeUser.id}`)
-              .then(() => {
-                chat.unread_count = 0
-              })
-          }
+          this.readChat(chat)
         })
+    },
+
+    readChat(chat) {
+      if (chat.unread_count > 0) {
+        this.$http.put(`/api/chats/${this.activeUser.id}`)
+          .then(() => {
+            chat.unread_count = 0
+          }) 
+      }
     },
 
     chatIsActive(chat) {
