@@ -1,6 +1,6 @@
 'use strict'
 
-import { app, protocol, BrowserWindow } from 'electron'
+import { app, protocol, BrowserWindow, Notification } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
@@ -39,6 +39,11 @@ function createWindow() {
   win.on('closed', () => {
     win = null
   })
+
+  win.on('close', (e) => {
+    e.preventDefault()
+    win.hide()
+  })
 }
 
 // Quit when all windows are closed.
@@ -55,6 +60,8 @@ app.on('activate', () => {
   // dock icon is clicked and there are no other windows open.
   if (win === null) {
     createWindow()
+  } else {
+    win.show()
   }
 })
 

@@ -20,17 +20,19 @@
       </div>
 
       <div class="mt-16 border-t-2 overflow-auto" style="height: calc(100% - 4rem)">
-        <ul v-if="chats.length">
-          <li class="px-3 py-5 flex justify-between items-center border-b-2" v-for="chat in chats" :key="chat.id" @click="getChat(chat)">
+        <ul class="cursor-pointer" v-if="chats.length">
+          <li class="p-3 flex justify-between border-b-2" :class="{ 'bg-gray-300': chatIsActive(chat) }" v-for="chat in chats" :key="chat.id" @click="getChat(chat)">
             <img class="h-12 w-12 rounded-full" :src="picture(chatUser(chat).picture)">
 
             <div class="ml-2">
               {{ chatUser(chat).name }}
 
-              <span v-if="chat.typing">Typing...</span>
-              <span v-else>{{ truncate(chat.content, 40) }}</span>
+              <span v-if="chatUser(chat).typing">Typing...</span>
+              <span v-else>{{ chat.content ? truncate(chat.content, 40) : '' }}</span>
             
               <span>{{ formatDate(chat.created_at) }}</span>
+
+              <span class="ml-2" v-if="chat.unread_count">{{ chat.unread_count }}</span>
             </div>
           </li>
         </ul>
@@ -41,13 +43,13 @@
       </div>
     </div>
 
-    <div class="w-2/3" v-if="activeChat">
+    <div class="w-2/3" v-if="activeUser">
       <div class="w-2/3 fixed bg-white top-0">
         <div class="flex justify-between items-center p-2">
           <div class="flex items-center">
-            <img class="rounded-full h-12 w-12" :src="picture(chatUser(activeChat).picture)">
-            <span class="ml-2">{{ chatUser(activeChat).name }}</span>
-            <span v-if="activeChat.typing === true">Typing...</span>
+            <img class="rounded-full h-12 w-12" :src="picture(activeUser.picture)">
+            <span class="ml-2">{{ activeUser.name }}</span>
+            <span v-if="activeUser.typing === true">Typing...</span>
           </div>
 
           <div>
@@ -59,8 +61,16 @@
 
       <div ref="messages" class="mt-16 overflow-auto border-t-2" style="height: calc(100% - 8rem)">
         <ul class="p-2" v-if="messages.length">
-          <li class="w-2/3 p-2 mt-2 bg-green-200 rounded-md" :class="{ 'ml-auto': messageIsSent(message) }" v-for="message in messages" :key="message.id">
-            {{ message.content }}
+          <li class="w-7/12 mt-5" :class="{ 'ml-auto': messageIsSent(message) }" v-for="message in messages" :key="message.id">
+            <div class="mb-2 text-center" v-for="file in message.files" :key="file.id">
+              <img class="ml-auto rounded" style="max-height: 300px;" :src="filePath(file.id)" @load="scrollToMessagesBottom">
+            </div>
+            
+            <div class="bg-green-200 p-2 rounded-md">
+              {{ message.content }}
+
+              <button @click="destroyMessage(message)" v-if="messageIsSent(message)">Delete</button>
+            </div>
           </li>
         </ul>
       </div>
@@ -94,7 +104,7 @@ export default {
       errors: [],
       chats: [],
       messages: [],
-      activeChat: null
+      activeUser: null
     }
   },
 
@@ -127,7 +137,7 @@ export default {
           this.chats = response.data
         
           this.chats.forEach(chat => {
-            chat.typing = false
+            this.chatUser(chat).typing = false
           })
         })
     },
@@ -142,14 +152,16 @@ export default {
               return this.chatUser(chat).id === e.user.id
             })
 
+            let chatUser = this.chatUser(chat)
+
             let key = this.chats.indexOf(chat)
 
-            chat.typing = true
+            this.chatUser(chat).typing = true
 
             this.$set(this.chats, key, chat)
 
             setTimeout(() => {
-              chat.typing = false
+              chatUser.typing = false
 
               this.$set(this.chats, key, chat)
             }, 2000)
@@ -160,18 +172,21 @@ export default {
      * Listen for messages.
      */
     listenForMessages() {
-      var activeUser = this.activeUser()
-
       this.$echo.private(`App.User.${this.$bus.user.id}`)
         .listen('MessageSent', (e) => {
-          if (activeUser && activeUser.id === e.message.sender_id) {
+          if (this.activeUser && this.activeUser.id === e.message.sender_id) {
             this.messages.push(e.message)
+          } else {
+            new Notification(e.message.sender.name, {
+              body: e.message.content,
+              icon: this.picture(e.message.sender.picture)
+            })
           }
         })
         .listen('MessageUnsent', (e) => {
-          if (activeUser && activeUser.id === e.message.sender_id) {
+          if (this.activeUser && this.activeUser.id === e.message.sender_id) {
             this.messages.splice(
-              this.messages.findIndex(m => m.id === e.message.id), 
+              this.messages.findIndex(m => m.id === e.message.id),  1
             )
           }
         })
@@ -181,7 +196,7 @@ export default {
      * Send a whisper that the user is typing.
      */
     whisper() {
-      this.$echo.private(`typing.${this.activeUser().id}`)
+      this.$echo.private(`typing.${this.activeUser.id}`)
         .whisper('typing', {
           user: this.$bus.user
         })
@@ -191,30 +206,34 @@ export default {
      * Scroll to the botton of the messages container.
      */
     scrollToMessagesBottom() {
-      let container = this.$refs.messages;
+      let container = this.$refs.messages
 
-      container.scrollTop = container.scrollHeight;
+      container.scrollTop = container.scrollHeight
     },
 
     /**
      * Get the messages for the given chat.
      */
     getChat(chat) {
-      this.activeChat = chat
-      this.form.receiver_id = this.chatUser(chat).id;
+      this.activeUser = this.chatUser(chat)
+      this.form.receiver_id = this.chatUser(chat).id
 
       this.$http.get(`/api/chats/${this.chatUser(chat).id}`)
         .then(response => {
           this.messages = response.data
+
+          if (chat.unread_count > 0) {
+            this.$http.put(`/api/chats/${this.activeUser.id}`)
+              .then(() => {
+                chat.unread_count = 0
+              })
+          }
         })
     },
 
-    /**
-     * Get the active user.
-     */
-    activeUser() {
-      if (this.activeChat) {
-        return this.chatUser(this.activeChat)
+    chatIsActive(chat) {
+      if (this.activeUser) {
+        return this.chatUser(chat).id === this.activeUser.id
       }
     },
 
@@ -274,6 +293,16 @@ export default {
         .catch(error => {
           this.errors = this.formatErrors(error.response.data.errors)
         })
+    },
+
+    /**
+     * Delete the given message.
+     */
+    destroyMessage(message) {
+      this.$http.delete(`/api/messages/${message.id}`)
+        .then(() => {
+          this.messages.splice(this.messages.indexOf(message),  1)
+        });
     },
 
     /**

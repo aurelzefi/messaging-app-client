@@ -57,6 +57,7 @@ Vue.mixin({
       localStorage.setItem('token', token)
 
       this.$http.defaults.headers.common.Authorization = `Bearer ${token}`
+      this.$echo.connector.pusher.config.auth.headers.Authorization = `Bearer ${token}`;
 
       this.$router.push('/home')
     },
@@ -71,7 +72,7 @@ Vue.mixin({
     /**
      * Get the full URL for the given file.
      */
-    file(id) {
+    filePath(id) {
       return `${API_URL}/api/files/${id}?api_token=${localStorage.getItem('token')}`
     },
 
