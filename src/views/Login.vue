@@ -4,7 +4,7 @@
       <img src="./../assets/logo.png">
     </div>
 
-    <form>
+    <form @submit.prevent="login">
       <div>
         <label for="email">Email</label>
         <input id="email" type="text" v-model="form.email"> 
@@ -16,7 +16,7 @@
       </div>
 
       <div>
-        <button type="button" @click="login">Login</button>
+        <button type="submit">Login</button>
 
         Don't have an account? <router-link to="/register">Register</router-link>
       </div>
@@ -40,11 +40,10 @@ export default {
     }
   },
 
-  mounted() {
-    //
-  },
-
   methods: {
+    /**
+     * Log the user into the application.
+     */
     login() {
       this.$http.post('/api/tokens', this.form)
         .then(response => {

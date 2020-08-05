@@ -4,7 +4,7 @@
       <img src="./../assets/logo.png">
     </div>
 
-    <form>
+    <form @submit.prevent="register">
       <div>
         <label for="name">Name</label>
         <input id="name" type="text" v-model="form.name">
@@ -26,7 +26,7 @@
       </div>
 
       <div>
-        <button type="button" @click="register">Register</button>
+        <button type="submit">Register</button>
 
         Already have an account? <router-link to="login">Login</router-link>
       </div>
@@ -52,11 +52,10 @@ export default {
     }
   },
 
-  mounted() {
-
-  },
-
   methods: {
+    /**
+     * Register the user.
+     */
     register() {
       this.$http.post('/api/register', this.form)
         .then(response => {

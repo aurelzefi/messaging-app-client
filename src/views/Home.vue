@@ -10,7 +10,7 @@
           </li>
 
           <li class="mr-6">
-            <a>Start New Chat</a>
+            <a>New Chat</a>
           </li>
 
           <li class="mr-6">
@@ -27,7 +27,7 @@
             <div class="ml-2">
               {{ chatUser(chat).name }}
 
-              <span v-if="chatUser(chat).typing">Typing...</span>
+              <span v-if="typings.includes(chatUser(chat).id)">Typing...</span>
               <span v-else>{{ chat.content ? truncate(chat.content, 40) : '' }}</span>
             
               <span>{{ formatDate(chat.created_at) }}</span>
@@ -49,7 +49,7 @@
           <div class="flex items-center">
             <img class="rounded-full h-12 w-12" :src="picture(activeUser.picture)">
             <span class="ml-2">{{ activeUser.name }}</span>
-            <span v-if="activeUser.typing === true">Typing...</span>
+            <span v-if="typings.includes(activeUser.id)">Typing...</span>
           </div>
 
           <div>
@@ -61,15 +61,15 @@
 
       <div ref="messages" class="mt-16 overflow-auto border-t-2" style="height: calc(100% - 8rem)">
         <ul class="p-2" v-if="messages.length">
-          <li class="w-7/12 mt-5" :class="{ 'ml-auto': messageIsSent(message) }" v-for="message in messages" :key="message.id">
-            <div class="mb-2 text-center" v-for="file in message.files" :key="file.id">
-              <img class="ml-auto rounded" style="max-height: 300px;" :src="filePath(file.id)" @load="scrollToMessagesBottom">
-            </div>
-            
+          <li class="w-7/12 mt-5" :class="{ 'ml-auto': isSentMessage(message) }" v-for="message in messages" :key="message.id">
             <div class="bg-green-200 p-2 rounded-md">
-              {{ message.content }}
+              <div class="mb-2 text-center" v-for="file in message.files" :key="file.id">
+                <img class="ml-auto rounded" style="max-height: 250px;" :src="filePath(file.id)" @load="scrollToMessagesBottom">
+              </div>
 
-              <button @click="destroyMessage(message)" v-if="messageIsSent(message)">Delete</button>
+              <span v-if="message.content">{{ message.content }}</span>
+
+              <button @click="deleteMessage(message)" v-if="isSentMessage(message)">Delete</button>
             </div>
           </li>
         </ul>
@@ -89,6 +89,8 @@
 </template>
 
 <script>
+import { remote } from 'electron'
+
 export default {
   /**
    * The component's data.
@@ -104,6 +106,7 @@ export default {
       errors: [],
       chats: [],
       messages: [],
+      typings: [],
       activeUser: null
     }
   },
@@ -113,7 +116,6 @@ export default {
    */
   mounted() {
     this.getChats()
-    
     this.listenForTypings()
     this.listenForMessages()
   },
@@ -135,10 +137,8 @@ export default {
       this.$http.get('/api/chats')
         .then(response => {
           this.chats = response.data
-        
-          this.chats.forEach(chat => {
-            this.chatUser(chat).typing = false
-          })
+
+          this.setBadgeCount()
         })
     },
 
@@ -148,22 +148,19 @@ export default {
     listenForTypings() {
       this.$echo.private(`typing.${this.$bus.user.id}`)
         .listenForWhisper('typing', (e) => {
-            let chat = this.chats.find(chat => {
-              return this.chatUser(chat).id === e.user.id
-            })
+          if (! this.typings.includes(e.user.id)) {
+            this.typings.push(e.user.id);
+          }
 
-            let chatUser = this.chatUser(chat)
-            let key = this.chats.indexOf(chat)
+          if (e.submit) {
+            this.typings.splice(this.typings.indexOf(e.user.id), 1)
+          
+            return
+          }
 
-            chatUser.typing = true
-
-            this.$set(this.chats, key, chat)
-
-            chatUser.timeout = setTimeout(() => {
-              chatUser.typing = false
-
-              this.$set(this.chats, key, chat)
-            }, 3000)
+          setTimeout(() => {
+            this.typings.splice(this.typings.indexOf(e.user.id), 1)
+          }, 3000)
         })
     },
 
@@ -173,63 +170,47 @@ export default {
     listenForMessages() {
       this.$echo.private(`App.User.${this.$bus.user.id}`)
         .listen('MessageSent', (e) => {
-          if (this.chatIsActive(e.message)) {
-            this.messages.push(e.message)
-
-            e.message.unread_count = 1
-
-            this.readChat(e.message)
-
-            return
-          }
-
-          new Notification(e.message.sender.name, {
-            body: e.message.content,
-            icon: this.picture(e.message.sender.picture)
-          })
-
-          let chat = this.chats.find(chat => {
-            return [chat.sender_id, chat.receiver_id].includes(e.message.sender_id)
-          })
+          let chat = this.chats.find(
+            chat => [chat.sender_id, chat.receiver_id].includes(e.message.sender_id)
+          )
 
           let key = this.chats.indexOf(chat)
 
-          chat.unread_count++
+          if (this.chatIsActive(e.message)) {
+            this.messages.push(e.message)
 
-          e.message.unread_count = chat.unread_count
+            this.readChat(e.message)
+          } else {
+            this.notify(e.message)
+
+            chat.unread_count++
+
+            e.message.unread_count = chat.unread_count
+          }
 
           this.$set(this.chats, key, e.message)
 
           this.chats.sort((a, b) => {
             return a.id === e.message.id ? -1 : b === e.message.id ? 1 : 0;
           });
+
+          this.setBadgeCount()
         })
         .listen('MessageUnsent', (e) => {
-          if (this.activeUser && this.activeUser.id === e.message.sender_id) {
+          if (this.chatIsActive(e.message)) {
             this.messages.splice(
-              this.messages.findIndex(m => m.id === e.message.id),  1
+              this.messages.findIndex(m => m.id === e.message.id), 1
             )
+
+            return
           }
+
+          let chat = this.chats.find(
+            chat => [chat.sender_id, chat.receiver_id].includes(e.message.sender_id)
+          )
+
+          this.chats.splice(this.chats.indexOf(chat), 1)
         })
-    },
-
-    /**
-     * Send a whisper that the user is typing.
-     */
-    whisper() {
-      this.$echo.private(`typing.${this.activeUser.id}`)
-        .whisper('typing', {
-          user: this.$bus.user
-        })
-    },
-
-    /**
-     * Scroll to the botton of the messages container.
-     */
-    scrollToMessagesBottom() {
-      let container = this.$refs.messages
-
-      container.scrollTop = container.scrollHeight
     },
 
     /**
@@ -237,7 +218,6 @@ export default {
      */
     getChat(chat) {
       this.activeUser = this.chatUser(chat)
-      this.form.receiver_id = this.chatUser(chat).id
 
       this.$http.get(`/api/chats/${this.activeUser.id}`)
         .then(response => {
@@ -247,33 +227,98 @@ export default {
         })
     },
 
+    /**
+     * Read the given chat.
+     */
     readChat(chat) {
       if (chat.unread_count > 0) {
         this.$http.put(`/api/chats/${this.activeUser.id}`)
           .then(() => {
             chat.unread_count = 0
+
+            this.setBadgeCount()
           }) 
       }
     },
 
-    chatIsActive(chat) {
-      if (this.activeUser) {
-        return this.chatUser(chat).id === this.activeUser.id
+    /**
+     * Send a message.
+     */
+    sendMessage() {
+      if (this.form.content === '' && this.form.files.length === 0) {
+        return
       }
+
+      const formData = new FormData()
+
+      formData.append('content', this.form.content)
+      formData.append('receiver_id', this.activeUser.id)
+        
+      this.form.files.forEach((file, key) => {
+        formData.append(`files[${key}]`, file)
+      });
+
+      this.$http.post(`/api/messages`, formData)
+        .then(response => {
+          response.data.unread_count = 0
+
+          this.messages.push(response.data)
+
+          this.form.content = ''
+          this.form.files = []
+
+          let chat = this.chats.find(
+            chat => [chat.sender_id, chat.receiver_id].includes(response.data.receiver_id)
+          )
+
+          let key = this.chats.indexOf(chat)
+
+          this.$set(this.chats, key, response.data)
+
+          this.chats.sort((a, b) => {
+            return a.id === response.data.id ? -1 : b === response.data.id ? 1 : 0;
+          });
+        })
+        .catch(error => {
+          this.errors = this.formatErrors(error.response.data.errors)
+        })
     },
 
     /**
-     * Get the user from the chat.
+     * Delete the given message.
      */
-    chatUser(chat) {
-      return this.$bus.user.id === chat.sender.id ? chat.receiver : chat.sender
+    deleteMessage(message) {
+      this.$http.delete(`/api/messages/${message.id}`)
+        .then(() => {
+          this.messages.splice(this.messages.indexOf(message),  1)
+
+          if (this.messages.length === 0) {
+            this.deleteChatForMessage(message)
+          }
+        })
     },
 
     /**
-     * Determine if the given message is sent.
+     * Delete the chat for the given message.
      */
-    messageIsSent(message) {
-      return this.$bus.user.id === message.sender_id
+    deleteChatForMessage(message) {
+      let chat = this.chats.find(
+        chat => [chat.sender_id, chat.receiver_id].includes(this.chatUser(message).id)
+      )
+
+      this.deleteChat(chat)
+    },
+
+    /**
+     * Delete the given chat.
+     */
+    deleteChat(chat) {
+      let user = this.chatUser(chat)
+
+      this.$http.delete(`/api/chats/${user.id}`)
+        .then(() => {
+          this.chats.splice(this.indexOf(chat), 1)
+        });
     },
 
     /**
@@ -296,38 +341,65 @@ export default {
     },
 
     /**
-     * Send a message.
+     * Set the badge count.  
      */
-    sendMessage() {
-      const formData = new FormData()
-      
-      formData.append('content', this.form.content)
-      formData.append('receiver_id', this.form.receiver_id)
-        
-      this.form.files.forEach((file, key) => {
-        formData.append(`files[${key}]`, file)
-      });
+    setBadgeCount() {
+      remote.app.setBadgeCount(
+        this.chats.filter(chat => chat.unread_count > 0).length
+      )
+    },
 
-      this.$http.post(`/api/messages`, formData)
-        .then(response => {
-          this.messages.push(response.data)
-
-          this.form.content = ''
-          this.form.files = []
-        })
-        .catch(error => {
-          this.errors = this.formatErrors(error.response.data.errors)
+    /**
+     * Send a whisper that the user is typing.
+     */
+    whisper(e) {
+      this.$echo.private(`typing.${this.activeUser.id}`)
+        .whisper('typing', {
+          user: this.$bus.user,
+          submit: e.key === 'Enter'
         })
     },
 
     /**
-     * Delete the given message.
+     * Notify the user with the given message.
      */
-    destroyMessage(message) {
-      this.$http.delete(`/api/messages/${message.id}`)
-        .then(() => {
-          this.messages.splice(this.messages.indexOf(message),  1)
-        });
+    notify(message) {
+      new Notification(message.sender.name, {
+        body: message.content,
+        icon: this.picture(message.sender.picture)
+      })
+    },
+
+    /**
+     * Scroll to the botton of the messages container.
+     */
+    scrollToMessagesBottom() {
+      let container = this.$refs.messages
+
+      container.scrollTop = container.scrollHeight
+    },
+
+    /**
+     * Get the user from the chat.
+     */
+    chatUser(chat) {
+      return this.$bus.user.id === chat.sender.id ? chat.receiver : chat.sender
+    },
+
+    /**
+     * Determine if the given chat is active.
+     */
+    chatIsActive(chat) {
+      if (this.activeUser) {
+        return this.chatUser(chat).id === this.activeUser.id
+      }
+    },
+
+    /**
+     * Determine if the given message is sent.
+     */
+    isSentMessage(message) {
+      return this.$bus.user.id === message.sender_id
     },
 
     /**
