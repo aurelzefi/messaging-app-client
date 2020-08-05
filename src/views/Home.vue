@@ -43,7 +43,7 @@
       </div>
     </div>
 
-    <div class="w-2/3" v-if="activeChat">
+    <div class="w-2/3" v-if="activeUser">
       <div class="w-2/3 fixed bg-white top-0">
         <div class="flex justify-between items-center p-2">
           <div class="flex items-center">
@@ -107,27 +107,8 @@ export default {
       chats: [],
       messages: [],
       typings: [],
-      activeChat: null
+      activeUser: null
     }
-  },
-
-  /**
-   * The component's computed properties.
-   */
-  computed: {
-    /**
-     * Get the active user.
-     */
-    activeUser() {
-      return this.$bus.user.id === this.activeChat.sender.id ? this.activeChat.receiver : this.activeChat.sender
-    },
-
-    /**
-     * Get the ID for the token.
-     */
-    tokenId() {
-      return localStorage.getItem('token').split('|')[0]
-    },
   },
 
   /**
@@ -228,7 +209,7 @@ export default {
      * Get the messages for the given chat.
      */
     getChat(chat) {
-      this.activeChat = chat
+      this.activeUser = this.chatUser(chat)
 
       this.$http.get(`/api/chats/${chat.chat_id}`)
         .then(response => {
@@ -317,7 +298,7 @@ export default {
           this.messages.splice(this.messages.indexOf(message),  1)
 
           if (this.messages.length === 0) {
-            this.deleteChat(message.chat_id)
+            this.chats.splice(this.findIndexForChatId(message.chat_id), 1)
           }
         })
     },
@@ -336,7 +317,7 @@ export default {
      * Log the user out of the application.
      */
     logout() {
-      this.$http.delete(`/api/tokens/${this.tokenId}`)
+      this.$http.delete(`/api/tokens/${this.tokenId()}`)
         .then(() => {
           this.$echo.leave(`typing.${this.$bus.user.id}`)
           this.$echo.leave(`App.User.${this.$bus.user.id}`)
@@ -382,7 +363,13 @@ export default {
      * Determine if the given chat is active.
      */
     chatIsActive(chat) {
-      return this.activeChat && this.activeChat.chat_id === chat.chat_id
+      if (this.activeUser) {
+        let ch = this.chats.find(
+          ch => [ch.sender_id, ch.receiver_id].includes(this.activeUser.id)
+        )
+
+        return ch.chat_id === chat.chat_id
+      }
     },
 
     /**
@@ -390,6 +377,13 @@ export default {
      */
     isSentMessage(message) {
       return this.$bus.user.id === message.sender_id
+    },
+
+    /**
+     * Get the ID for the token.
+     */
+    tokenId() {
+      return localStorage.getItem('token').split('|')[0]
     },
 
     /**

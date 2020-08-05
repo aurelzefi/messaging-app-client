@@ -57,7 +57,7 @@ export default {
      * Register the user.
      */
     register() {
-      this.$http.post('/api/register', this.form)
+      this.$http.post('/api/user', this.form)
         .then(response => {
           this.handleAfterAuth(response.data.token)
         })
