@@ -308,7 +308,7 @@ export default {
      */
     deleteChat(chatId) {
       this.$http.delete(`/api/chats/${chatId}`)
-      .then(() => {
+        .then(() => {
           this.chats.splice(this.findIndexForChatId(chatId), 1)
         });
     },
