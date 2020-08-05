@@ -10,7 +10,7 @@
           </li>
 
           <li class="mr-6">
-            <a>New Chat</a>
+            <button @click="openNewChat = true">New Chat</button>
           </li>
 
           <li class="mr-6">
@@ -43,7 +43,7 @@
       </div>
     </div>
 
-    <div class="w-2/3" v-if="activeUser">
+    <div class="w-2/3" v-if="activeChat">
       <div class="w-2/3 fixed bg-white top-0">
         <div class="flex justify-between items-center p-2">
           <div class="flex items-center">
@@ -107,8 +107,27 @@ export default {
       chats: [],
       messages: [],
       typings: [],
-      activeUser: null
+      activeChat: null
     }
+  },
+
+  /**
+   * The component's computed properties.
+   */
+  computed: {
+    /**
+     * Get the active user.
+     */
+    activeUser() {
+      return this.$bus.user.id === this.activeChat.sender.id ? this.activeChat.receiver : this.activeChat.sender
+    },
+
+    /**
+     * Get the ID for the token.
+     */
+    tokenId() {
+      return localStorage.getItem('token').split('|')[0]
+    },
   },
 
   /**
@@ -170,11 +189,7 @@ export default {
     listenForMessages() {
       this.$echo.private(`App.User.${this.$bus.user.id}`)
         .listen('MessageSent', (e) => {
-          let chat = this.chats.find(
-            chat => [chat.sender_id, chat.receiver_id].includes(e.message.sender_id)
-          )
-
-          let key = this.chats.indexOf(chat)
+          let chat = this.chats.find(chat => chat.chat_id === e.message.chat_id)
 
           if (this.chatIsActive(e.message)) {
             this.messages.push(e.message)
@@ -187,8 +202,8 @@ export default {
 
             e.message.unread_count = chat.unread_count
           }
-
-          this.$set(this.chats, key, e.message)
+          
+          this.$set(this.chats, this.findIndexForChatId(chat.chat_id), e.message)
 
           this.chats.sort((a, b) => {
             return a.id === e.message.id ? -1 : b === e.message.id ? 1 : 0;
@@ -205,11 +220,7 @@ export default {
             return
           }
 
-          let chat = this.chats.find(
-            chat => [chat.sender_id, chat.receiver_id].includes(e.message.sender_id)
-          )
-
-          this.chats.splice(this.chats.indexOf(chat), 1)
+          this.removeChatIfNoMessages(e.message.chat_id)
         })
     },
 
@@ -217,9 +228,9 @@ export default {
      * Get the messages for the given chat.
      */
     getChat(chat) {
-      this.activeUser = this.chatUser(chat)
+      this.activeChat = chat
 
-      this.$http.get(`/api/chats/${this.activeUser.id}`)
+      this.$http.get(`/api/chats/${chat.chat_id}`)
         .then(response => {
           this.messages = response.data
 
@@ -232,13 +243,25 @@ export default {
      */
     readChat(chat) {
       if (chat.unread_count > 0) {
-        this.$http.put(`/api/chats/${this.activeUser.id}`)
+        this.$http.put(`/api/chats/${chat.chat_id}`)
           .then(() => {
             chat.unread_count = 0
 
             this.setBadgeCount()
           }) 
       }
+    },
+
+    /**
+     * Remove the chat if there are no more messages.
+     */
+    removeChatIfNoMessages(chatId) {
+      this.$http.get(`/api/chats/${chatId}`)
+        .then(response => {
+          if (response.data.length === 0) {
+            this.chats.splice(this.findIndexForChatId(chatId), 1)
+          }
+        })
     },
 
     /**
@@ -253,7 +276,7 @@ export default {
 
       formData.append('content', this.form.content)
       formData.append('receiver_id', this.activeUser.id)
-        
+
       this.form.files.forEach((file, key) => {
         formData.append(`files[${key}]`, file)
       });
@@ -267,13 +290,7 @@ export default {
           this.form.content = ''
           this.form.files = []
 
-          let chat = this.chats.find(
-            chat => [chat.sender_id, chat.receiver_id].includes(response.data.receiver_id)
-          )
-
-          let key = this.chats.indexOf(chat)
-
-          this.$set(this.chats, key, response.data)
+          this.$set(this.chats, this.findIndexForChatId(response.data.chat_id), response.data)
 
           this.chats.sort((a, b) => {
             return a.id === response.data.id ? -1 : b === response.data.id ? 1 : 0;
@@ -285,6 +302,13 @@ export default {
     },
 
     /**
+     * Find the index for the given chat ID.
+     */
+    findIndexForChatId(chatId) {
+      return this.chats.findIndex(chat => chat.chat_id === chatId)
+    },
+
+    /**
      * Delete the given message.
      */
     deleteMessage(message) {
@@ -293,31 +317,18 @@ export default {
           this.messages.splice(this.messages.indexOf(message),  1)
 
           if (this.messages.length === 0) {
-            this.deleteChatForMessage(message)
+            this.deleteChat(message.chat_id)
           }
         })
     },
 
     /**
-     * Delete the chat for the given message.
-     */
-    deleteChatForMessage(message) {
-      let chat = this.chats.find(
-        chat => [chat.sender_id, chat.receiver_id].includes(this.chatUser(message).id)
-      )
-
-      this.deleteChat(chat)
-    },
-
-    /**
      * Delete the given chat.
      */
-    deleteChat(chat) {
-      let user = this.chatUser(chat)
-
-      this.$http.delete(`/api/chats/${user.id}`)
-        .then(() => {
-          this.chats.splice(this.indexOf(chat), 1)
+    deleteChat(chatId) {
+      this.$http.delete(`/api/chats/${chatId}`)
+      .then(() => {
+          this.chats.splice(this.findIndexForChatId(chatId), 1)
         });
     },
 
@@ -325,7 +336,7 @@ export default {
      * Log the user out of the application.
      */
     logout() {
-      this.$http.delete(`/api/tokens/${this.tokenId()}`)
+      this.$http.delete(`/api/tokens/${this.tokenId}`)
         .then(() => {
           this.$echo.leave(`typing.${this.$bus.user.id}`)
           this.$echo.leave(`App.User.${this.$bus.user.id}`)
@@ -341,15 +352,6 @@ export default {
     },
 
     /**
-     * Set the badge count.  
-     */
-    setBadgeCount() {
-      remote.app.setBadgeCount(
-        this.chats.filter(chat => chat.unread_count > 0).length
-      )
-    },
-
-    /**
      * Send a whisper that the user is typing.
      */
     whisper(e) {
@@ -358,16 +360,6 @@ export default {
           user: this.$bus.user,
           submit: e.key === 'Enter'
         })
-    },
-
-    /**
-     * Notify the user with the given message.
-     */
-    notify(message) {
-      new Notification(message.sender.name, {
-        body: message.content,
-        icon: this.picture(message.sender.picture)
-      })
     },
 
     /**
@@ -390,9 +382,7 @@ export default {
      * Determine if the given chat is active.
      */
     chatIsActive(chat) {
-      if (this.activeUser) {
-        return this.chatUser(chat).id === this.activeUser.id
-      }
+      return this.activeChat && this.activeChat.chat_id === chat.chat_id
     },
 
     /**
@@ -400,13 +390,6 @@ export default {
      */
     isSentMessage(message) {
       return this.$bus.user.id === message.sender_id
-    },
-
-    /**
-     * Get the ID for the token.
-     */
-    tokenId() {
-      return localStorage.getItem('token').split('|')[0]
     },
 
     /**
@@ -421,6 +404,25 @@ export default {
      */
     handleFiles() {
       this.form.files = Object.values(this.$refs.files.files)
+    },
+
+    /**
+     * Notify the user with the given message.
+     */
+    notify(message) {
+      new Notification(message.sender.name, {
+        body: message.content,
+        icon: this.picture(message.sender.picture)
+      })
+    },
+
+    /**
+     * Set the badge count.  
+     */
+    setBadgeCount() {
+      remote.app.setBadgeCount(
+        this.chats.filter(chat => chat.unread_count > 0).length
+      )
     },
   }
 }
