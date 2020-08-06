@@ -1,7 +1,7 @@
 <template>
   <div class="flex h-screen">
-    <div class="w-3/12">
-      <div class="w-3/12 h-16 fixed flex justify-end bg-gray-100 p-2 border-b border-r border-gray-200">
+    <div class="w-1/3">
+      <div class="w-1/3 h-16 fixed flex justify-end bg-gray-100 p-2 border-b border-r border-gray-200">
         <ul class="flex items-center">
           <li class="mr-4">
             <button class="p-2 align-middle outline-none focus:outline-none" type="button">
@@ -25,22 +25,32 @@
 
       <div class="mt-16 border-r overflow-auto" style="height: calc(100vh - 4rem)">
         <ul class="cursor-pointer" v-if="chats.length">
-          <li class="p-3 flex justify-between border-b hover:bg-gray-100" :class="{ 'bg-gray-300': chatIsActive(chat) }" v-for="chat in chats" :key="chat.id" @click="getChat(chat)">
-            <img class="h-12 w-12 rounded-full" :src="picture(chatUser(chat).picture)">
-
-            <div class="ml-2">
-              {{ chatUser(chat).name }}
-
-              <span v-if="isTyping(chatUser(chat))">Typing...</span>
-              
-              <span v-else>
-                <template v-if="chat.files.length">Icon</template>
-                <template v-if="chat.content">{{ truncate(chat.content, 40) }}</template>
-              </span>
+          <li class="flex justify-between p-2 border-b hover:bg-gray-100" :class="{ 'bg-gray-300': chatIsActive(chat) }" v-for="chat in chats" :key="chat.id" @click="getChat(chat)">
+            <div class="flex items-center">
+              <div>
+                <img class="h-12 w-12 rounded-full" :src="picture(chatUser(chat).picture)">
+              </div>
             
-              <span>{{ formatDate(chat.created_at) }}</span>
+              <div class="flex flex-col ml-2">
+                <span>
+                  {{ chatUser(chat).name }}
+                </span>
 
-              <span class="ml-2" v-if="chat.unread_count">{{ chat.unread_count }}</span>
+                <span class="text-sm text-gray-700" v-if="isTyping(chatUser(chat))">Typing...</span>
+                
+                <span class="text-sm text-gray-700" v-else>
+                  <svg class="h-4 w-4 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor" v-if="chat.files.length"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg> <template v-if="chat.content">{{ truncate(chat.content, 35) }}</template>
+                </span>
+              </div>
+            </div>
+
+            <div class="flex justify-between">            
+              <div class="flex flex-col text-xs">
+                <span>{{ formatDate(chat.created_at) }}</span>
+
+                <span>12</span>
+                <span v-if="chat.unread_count">{{ chat.unread_count }}</span>
+              </div>
             </div>
           </li>
         </ul>
@@ -51,8 +61,8 @@
       </div>
     </div>
 
-    <div class="w-9/12" v-if="activeUser">
-      <div class="w-9/12 h-16 fixed flex justify-between items-center bg-gray-100 border-gray-200 p-2 border-b">        
+    <div class="w-2/3" v-if="activeUser">
+      <div class="w-2/3 h-16 fixed flex justify-between items-center bg-gray-100 border-gray-200 p-2 border-b">        
         <ul class="flex items-center">
           <li>
             <img class="h-10 w-10 rounded-full" :src="picture(activeUser.picture)">
@@ -60,7 +70,7 @@
           
           <li class="flex flex-col ml-3">
             <span>{{ activeUser.name }}</span>
-            <span class="text-gray-700 text-xs" v-if="isTyping(activeUser)">Typing...</span>
+            <span class="text-xs text-gray-700" v-if="isTyping(activeUser)">Typing...</span>
           </li>
         </ul>
 
@@ -98,12 +108,12 @@
         </ul>
       </div>
 
-      <form class="w-9/12 h-16 fixed flex items-center px-2 border-t" @submit.prevent="sendMessage">
+      <form class="w-2/3 h-16 fixed flex items-center px-2 border-t" @submit.prevent="sendMessage">
         <input ref="content" class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" type="text" v-model="form.content" @keyup="whisper" placeholder="Type a message">
       </form>
     </div>
 
-    <div class="w-9/12 my-auto text-center" v-else>
+    <div class="w-2/3 my-auto text-center" v-else>
       <img class="mx-auto" src="./../assets/logo.png">
 
       Empty space...
