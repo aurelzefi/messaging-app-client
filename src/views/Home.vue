@@ -151,8 +151,8 @@ export default {
     listenForTypings() {
       this.$echo.private(`typing.${this.$bus.user.id}`)
         .listenForWhisper('typing', (e) => {
-          if (! this.typings.includes(e.user.id)) {
-            this.typings.push(e.user.id);
+          if (! this.isTyping(e.user)) {
+            this.typings.push(e.user.id)
           }
 
           if (e.submit) {
@@ -415,6 +415,9 @@ export default {
       })
     },
 
+    /**
+     * Determine if the given user is typing.
+     */
     isTyping(user) {
       return this.typings.includes(user.id)
     },
