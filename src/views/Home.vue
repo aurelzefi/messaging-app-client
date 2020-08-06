@@ -1,27 +1,31 @@
 <template>
   <div class="flex h-screen">
-    <div class="w-1/3 border-r-2">
-      <div class="w-1/3 fixed bg-white border-r-2">
-        <ul class="flex items-center p-2 justify-end">
-          <li class="mr-6">
-            <a>
-              <img class="h-12 w-12 rounded-full" :src="picture($bus.user.picture)">
-            </a>
+    <div class="w-3/12">
+      <div class="w-3/12 h-16 fixed flex justify-end bg-gray-100 p-2 border-b border-r border-gray-200">
+        <ul class="flex items-center">
+          <li class="mr-4">
+            <button class="p-2 align-middle outline-none focus:outline-none" type="button">
+              <img class="h-10 w-10 rounded-full" :src="picture($bus.user.picture)">
+            </button>
           </li>
 
-          <li class="mr-6">
-            <button @click="openNewChat = true">New Chat</button>
+          <li class="mr-4">
+            <button class="p-2 align-middle rounded-full outline-none focus:bg-gray-400 focus:outline-none" type="button">
+              <svg class="h-6 w-6 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+            </button>
           </li>
 
-          <li class="mr-6">
-            <a class="">Dropdown</a>
+          <li class="mr-4">
+            <button class="p-2 align-middle rounded-full outline-none focus:bg-gray-400 focus:outline-none" type="button">
+              <svg class="h-6 w-6 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
+            </button>
           </li>
         </ul>
       </div>
 
-      <div class="mt-16 border-t-2 overflow-auto" style="height: calc(100% - 4rem)">
+      <div class="mt-16 border-r overflow-auto" style="height: calc(100vh - 4rem)">
         <ul class="cursor-pointer" v-if="chats.length">
-          <li class="p-3 flex justify-between border-b-2" :class="{ 'bg-gray-300': chatIsActive(chat) }" v-for="chat in chats" :key="chat.id" @click="getChat(chat)">
+          <li class="p-3 flex justify-between border-b hover:bg-gray-100" :class="{ 'bg-gray-300': chatIsActive(chat) }" v-for="chat in chats" :key="chat.id" @click="getChat(chat)">
             <img class="h-12 w-12 rounded-full" :src="picture(chatUser(chat).picture)">
 
             <div class="ml-2">
@@ -47,25 +51,38 @@
       </div>
     </div>
 
-    <div class="w-2/3" v-if="activeUser">
-      <div class="w-2/3 fixed bg-white top-0">
-        <div class="flex justify-between items-center p-2">
-          <div class="flex items-center">
-            <img class="rounded-full h-12 w-12" :src="picture(activeUser.picture)">
-            <span class="ml-2">{{ activeUser.name }}</span>
-            <span v-if="isTyping(activeUser)">Typing...</span>
-          </div>
+    <div class="w-9/12" v-if="activeUser">
+      <div class="w-9/12 h-16 fixed flex justify-between items-center bg-gray-100 border-gray-200 p-2 border-b">        
+        <ul class="flex items-center">
+          <li>
+            <img class="h-10 w-10 rounded-full" :src="picture(activeUser.picture)">
+          </li>
+          
+          <li class="flex flex-col ml-3">
+            <span>{{ activeUser.name }}</span>
+            <span class="text-gray-700 text-xs" v-if="isTyping(activeUser)">Typing...</span>
+          </li>
+        </ul>
 
-          <div>
-            <button class="outline-none p-2 bg-blue-500 text-white rounded-md border-blue-700" type="button" @click="openFileBrowser">Add Files</button>
+        <ul class="flex items-center">
+          <li class="mr-4">
+            <button class="p-2 align-middle rounded-full outline-none focus:bg-gray-400 focus:outline-none" type="button" @click="openFileBrowser">
+              <svg class="h-6 w-6 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+            </button>
             <input class="hidden" type="file" ref="files" multiple @change="handleFiles">
-          </div>
-        </div>
+          </li>
+
+          <li class="mr-4">
+            <button class="p-2 align-middle rounded-full outline-none focus:bg-gray-400 focus:outline-none" type="button">
+              <svg class="h-6 w-6 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+          </li>
+        </ul>
       </div>
 
-      <div ref="messages" class="mt-16 overflow-auto border-t-2" style="height: calc(100% - 8rem)">
+      <div ref="messages" class="mt-16 overflow-auto" style="height: calc(100vh - 8rem)">
         <ul class="p-2" v-if="messages.length">
-          <li class="w-7/12 mt-5" :class="{ 'ml-auto': isSentMessage(message) }" v-for="message in messages" :key="message.id">
+          <li class="mt-5 w-7/12" :class="{ 'ml-auto': isSentMessage(message) }" v-for="message in messages" :key="message.id">
             <div class="bg-green-200 p-2 rounded-md">
               <div class="mb-2 text-center" v-for="file in message.files" :key="file.id">
                 <img class="ml-auto rounded" style="max-height: 250px;" :src="filePath(file.id)" @load="scrollToMessagesBottom">
@@ -73,21 +90,23 @@
 
               <span v-if="message.content">{{ message.content }}</span>
 
-              <button @click="deleteMessage(message)" v-if="isSentMessage(message)">Delete</button>
+              <button>Icon</button>
+
+              <!-- @click="deleteMessage(message)" v-if="isSentMessage(message)" -->
             </div>
           </li>
         </ul>
       </div>
 
-      <form class="w-2/3 h-16 fixed flex items-center px-2 border-t-2" @submit.prevent="sendMessage">
-        <input class="w-full p-2 outline-none border-gray-500 border rounded" type="text" v-model="form.content" @keyup="whisper" placeholder="Type a message">
+      <form class="w-9/12 h-16 fixed flex items-center px-2 border-t" @submit.prevent="sendMessage">
+        <input ref="content" class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" type="text" v-model="form.content" @keyup="whisper" placeholder="Type a message">
       </form>
     </div>
 
-    <div class="w-2/3 my-auto text-center" v-else>
+    <div class="w-9/12 my-auto text-center" v-else>
       <img class="mx-auto" src="./../assets/logo.png">
 
-      Empty space here...
+      Empty space...
     </div>
   </div>
 </template>
@@ -221,6 +240,8 @@ export default {
           this.messages = response.data
 
           this.readChat(chat)
+
+          this.$refs.content.focus()
         })
     },
 
