@@ -32,8 +32,8 @@ Vue.prototype.$echo = new Echo({
     headers: {
       Authorization: `Bearer ${localStorage.getItem('token')}`
     }
-  },
-});
+  }
+})
 
 Vue.mixin({
   methods: {
@@ -57,7 +57,7 @@ Vue.mixin({
       localStorage.setItem('token', token)
 
       this.$http.defaults.headers.common.Authorization = `Bearer ${token}`
-      this.$echo.connector.pusher.config.auth.headers.Authorization = `Bearer ${token}`;
+      this.$echo.connector.pusher.config.auth.headers.Authorization = `Bearer ${token}`
 
       this.$router.push('/home')
     },
@@ -80,14 +80,14 @@ Vue.mixin({
      * Truncate the given string.
      */
     truncate(string, size = 100) {
-      return string.length > size ? `${string.substr(0, size)}...` : string;
+      return string.length > size ? `${string.substr(0, size)}...` : string
     },
 
     /**
      * Format the given date.
      */
     formatDate(timestamp) {
-      return moment(timestamp).format('YYYY-MM-DD HH:mm');
+      return moment(timestamp).format('YYYY-MM-DD HH:mm')
     }
   },
 })

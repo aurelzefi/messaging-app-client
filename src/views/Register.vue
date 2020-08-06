@@ -64,7 +64,7 @@ export default {
         .catch(error => {
           this.errors = this.formatErrors(error.response.data.errors)
         })
-    },
-  },
+    }
+  }
 }
 </script>

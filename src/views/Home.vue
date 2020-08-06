@@ -429,7 +429,7 @@ export default {
       remote.app.setBadgeCount(
         this.chats.filter(chat => chat.unread_count > 0).length
       )
-    },
+    }
   }
 }
 </script>
