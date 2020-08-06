@@ -27,8 +27,12 @@
             <div class="ml-2">
               {{ chatUser(chat).name }}
 
-              <span v-if="typings.includes(chatUser(chat).id)">Typing...</span>
-              <span v-else>{{ chat.content ? truncate(chat.content, 40) : '' }}</span>
+              <span v-if="isTyping(chatUser(chat))">Typing...</span>
+              
+              <span v-else>
+                <template v-if="chat.files.length">Icon</template>
+                <template v-if="chat.content">{{ truncate(chat.content, 40) }}</template>
+              </span>
             
               <span>{{ formatDate(chat.created_at) }}</span>
 
@@ -49,7 +53,7 @@
           <div class="flex items-center">
             <img class="rounded-full h-12 w-12" :src="picture(activeUser.picture)">
             <span class="ml-2">{{ activeUser.name }}</span>
-            <span v-if="typings.includes(activeUser.id)">Typing...</span>
+            <span v-if="isTyping(activeUser)">Typing...</span>
           </div>
 
           <div>
@@ -98,7 +102,6 @@ export default {
   data() {
     return {
       form: {
-        receiver_id: '',
         content: '',
         files: []
       },
@@ -170,8 +173,6 @@ export default {
     listenForMessages() {
       this.$echo.private(`App.User.${this.$bus.user.id}`)
         .listen('MessageSent', (e) => {
-          let chat = this.chats.find(chat => chat.chat_id === e.message.chat_id)
-
           if (this.chatIsActive(e.message)) {
             this.messages.push(e.message)
 
@@ -179,12 +180,16 @@ export default {
           } else {
             this.notify(e.message)
 
+            let chat = this.chats.find(
+              chat => chat.chat_id === e.message.chat_id
+            )
+
             chat.unread_count++
 
             e.message.unread_count = chat.unread_count
           }
           
-          this.$set(this.chats, this.findIndexForChatId(chat.chat_id), e.message)
+          this.$set(this.chats, this.findIndexForChat(e.message.chat_id), e.message)
 
           this.chats.sort((a, b) => {
             return a.id === e.message.id ? -1 : b === e.message.id ? 1 : 0;
@@ -240,7 +245,7 @@ export default {
       this.$http.get(`/api/chats/${chatId}`)
         .then(response => {
           if (response.data.length === 0) {
-            this.chats.splice(this.findIndexForChatId(chatId), 1)
+            this.chats.splice(this.findIndexForChat(chatId), 1)
           }
         })
     },
@@ -271,7 +276,7 @@ export default {
           this.form.content = ''
           this.form.files = []
 
-          this.$set(this.chats, this.findIndexForChatId(response.data.chat_id), response.data)
+          this.$set(this.chats, this.findIndexForChat(response.data.chat_id), response.data)
 
           this.chats.sort((a, b) => {
             return a.id === response.data.id ? -1 : b === response.data.id ? 1 : 0;
@@ -283,9 +288,9 @@ export default {
     },
 
     /**
-     * Find the index for the given chat ID.
+     * Find the index for the given chat.
      */
-    findIndexForChatId(chatId) {
+    findIndexForChat(chatId) {
       return this.chats.findIndex(chat => chat.chat_id === chatId)
     },
 
@@ -298,7 +303,7 @@ export default {
           this.messages.splice(this.messages.indexOf(message),  1)
 
           if (this.messages.length === 0) {
-            this.chats.splice(this.findIndexForChatId(message.chat_id), 1)
+            this.chats.splice(this.findIndexForChat(message.chat_id), 1)
           }
         })
     },
@@ -309,7 +314,7 @@ export default {
     deleteChat(chatId) {
       this.$http.delete(`/api/chats/${chatId}`)
         .then(() => {
-          this.chats.splice(this.findIndexForChatId(chatId), 1)
+          this.chats.splice(this.findIndexForChat(chatId), 1)
         });
     },
 
@@ -405,9 +410,13 @@ export default {
      */
     notify(message) {
       new Notification(message.sender.name, {
-        body: message.content,
+        body: message.content ?? '',
         icon: this.picture(message.sender.picture)
       })
+    },
+
+    isTyping(user) {
+      return this.typings.includes(user.id)
     },
 
     /**
