@@ -23,34 +23,27 @@
         </ul>
       </div>
 
-      <div class="mt-16 border-r overflow-auto" style="height: calc(100vh - 4rem)">
+      <div class="mt-16 border-r border-gray-200 overflow-auto" style="height: calc(100vh - 4rem)">
         <ul class="cursor-pointer" v-if="chats.length">
-          <li class="flex justify-between p-2 border-b hover:bg-gray-100" :class="{ 'bg-gray-300': chatIsActive(chat) }" v-for="chat in chats" :key="chat.id" @click="getChat(chat)">
-            <div class="flex items-center">
-              <div>
-                <img class="h-12 w-12 rounded-full" :src="picture(chatUser(chat).picture)">
-              </div>
-            
-              <div class="flex flex-col ml-2">
-                <span>
-                  {{ chatUser(chat).name }}
-                </span>
+          <li class="flex p-3 border-b hover:bg-gray-100" :class="{ 'bg-gray-300': chatIsActive(chat) }" v-for="chat in chats" :key="chat.id" @click="getChat(chat)">
+            <img class="h-12 w-12 rounded-full" :src="picture(chatUser(chat).picture)">
+              
+            <div class="flex flex-col ml-2 overflow-hidden">
+              <span class="truncate">{{ chatUser(chat).name }}</span>
 
-                <span class="text-sm text-gray-700" v-if="isTyping(chatUser(chat))">Typing...</span>
-                
-                <span class="text-sm text-gray-700" v-else>
-                  <svg class="h-4 w-4 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor" v-if="chat.files.length"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg> <template v-if="chat.content">{{ truncate(chat.content, 35) }}</template>
-                </span>
-              </div>
+              <span class="text-sm text-gray-700 truncate">
+                <template v-if="isTyping(chatUser(chat))">Typing...</template>
+
+                <template v-else>
+                  <svg class="inline h-4 w-4 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"   stroke="currentColor" v-if="chat.files.length"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg> <template v-if="chat.content">{{ chat.content }}</template>
+                </template>
+              </span>
             </div>
+                    
+            <div class="relative right-0 flex flex-col justify-between ml-auto text-xs text-right text-gray-700 whitespace-no-wrap">
+              <span class="mt-1">{{ dateFromNow(chat.created_at) }}</span>
 
-            <div class="flex justify-between">            
-              <div class="flex flex-col text-xs">
-                <span>{{ formatDate(chat.created_at) }}</span>
-
-                <span>12</span>
-                <span v-if="chat.unread_count">{{ chat.unread_count }}</span>
-              </div>
+              <span class="self-end px-2 mb-1 bg-blue-500 text-white rounded-full" v-if="chat.unread_count">{{ chat.unread_count }}</span>
             </div>
           </li>
         </ul>

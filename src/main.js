@@ -84,10 +84,10 @@ Vue.mixin({
     },
 
     /**
-     * Format the given date.
+     * Get a human readable date.
      */
-    formatDate(timestamp) {
-      return moment(timestamp).format('YYYY-MM-DD HH:mm')
+    dateFromNow(date) {
+      return moment(date).fromNow()
     }
   },
 })
