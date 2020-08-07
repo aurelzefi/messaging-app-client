@@ -1,12 +1,12 @@
 <template>
-  <div class="flex h-screen">
-    <div class="w-1/3">
-      <div class="w-1/3 h-16 fixed flex justify-end bg-gray-100 p-2 border-b border-r border-gray-200">
+  <div class="flex h-screen antialiased">
+    <div class="w-full h-16 fixed flex z-10">
+      <div class="w-1/3 flex justify-end bg-gray-100 p-2 border-b border-r border-gray-200">
         <ul class="flex items-center">
           <li class="mr-4">
-            <button class="p-2 align-middle outline-none focus:outline-none" type="button">
+            <router-link class="block p-2" to="profile">
               <img class="h-10 w-10 rounded-full" :src="picture($bus.user.picture)">
-            </button>
+            </router-link>
           </li>
 
           <li class="mr-4">
@@ -15,54 +15,33 @@
             </button>
           </li>
 
-          <li class="mr-4">
-            <button class="p-2 align-middle rounded-full outline-none focus:bg-gray-400 focus:outline-none" type="button">
+          <li class="relative mr-4">
+            <button class="p-2 align-middle rounded-full outline-none focus:bg-gray-400 focus:outline-none" type="button" @click="userMenu = ! userMenu">
               <svg class="h-6 w-6 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
             </button>
+            <button class="fixed inset-0 h-full w-full bg-black opacity-50 cursor-default focus:outline-none z-10" tabindex="-1" v-if="userMenu" @click="userMenu = false"></button>
+            <div class="w-48 absolute bg-white right-0 mt-1 border rounded-md border-gray-200 shadow-md z-20" v-if="userMenu">
+              <ul class="py-2 text-sm text-gray-700">
+                <li>
+                  <router-link class="block px-3 py-2 hover:bg-gray-200" to="profile">Settings</router-link>
+                </li>
+                <li>
+                  <a class="block px-3 py-2 hover:bg-gray-200 cursor-pointer" @click="logout">Log out</a>
+                </li>
+              </ul>
+            </div>
           </li>
         </ul>
       </div>
 
-      <div class="mt-16 border-r border-gray-200 overflow-auto" style="height: calc(100vh - 4rem)">
-        <ul class="cursor-pointer" v-if="chats.length">
-          <li class="flex p-3 border-b hover:bg-gray-100" :class="{ 'bg-gray-300': chatIsActive(chat) }" v-for="chat in chats" :key="chat.id" @click="getChat(chat)">
-            <img class="h-12 w-12 rounded-full" :src="picture(chatUser(chat).picture)">
-              
-            <div class="flex flex-col ml-2 overflow-hidden">
-              <span class="truncate">{{ chatUser(chat).name }}</span>
-
-              <span class="text-sm text-gray-700 truncate">
-                <template v-if="isTyping(chatUser(chat))">Typing...</template>
-
-                <template v-else>
-                  <svg class="inline h-4 w-4 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"   stroke="currentColor" v-if="chat.files.length"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg> <template v-if="chat.content">{{ chat.content }}</template>
-                </template>
-              </span>
-            </div>
-                    
-            <div class="relative right-0 flex flex-col justify-between ml-auto text-xs text-right text-gray-700 whitespace-no-wrap">
-              <span class="mt-1">{{ dateFromNow(chat.created_at) }}</span>
-
-              <span class="self-end px-2 mb-1 bg-blue-500 text-white rounded-full" v-if="chat.unread_count">{{ chat.unread_count }}</span>
-            </div>
-          </li>
-        </ul>
-
-        <div v-else>
-          No chats to display.
-        </div>
-      </div>
-    </div>
-
-    <div class="w-2/3" v-if="activeUser">
-      <div class="w-2/3 h-16 fixed flex justify-between items-center bg-gray-100 border-gray-200 p-2 border-b">        
+      <div class="w-2/3 flex justify-between items-center bg-gray-100 border-gray-200 p-2 border-b" v-if="activeUser">        
         <ul class="flex items-center">
           <li>
             <img class="h-10 w-10 rounded-full" :src="picture(activeUser.picture)">
           </li>
           
           <li class="flex flex-col ml-3">
-            <span>{{ activeUser.name }}</span>
+            <span class="text-gray-900">{{ activeUser.name }}</span>
             <span class="text-xs text-gray-700" v-if="isTyping(activeUser)">Typing...</span>
           </li>
         </ul>
@@ -75,33 +54,101 @@
             <input class="hidden" type="file" ref="files" multiple @change="handleFiles">
           </li>
 
-          <li class="mr-4">
-            <button class="p-2 align-middle rounded-full outline-none focus:bg-gray-400 focus:outline-none" type="button">
+          <li class="relative mr-4 z-0">
+            <button class="p-2 align-middle rounded-full outline-none focus:bg-gray-400 focus:outline-none" type="button" @click="chatMenu = ! chatMenu">
               <svg class="h-6 w-6 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
             </button>
-          </li>
-        </ul>
-      </div>
-
-      <div ref="messages" class="mt-16 overflow-auto" style="height: calc(100vh - 8rem)">
-        <ul class="p-2" v-if="messages.length">
-          <li class="mt-5 w-7/12" :class="{ 'ml-auto': isSentMessage(message) }" v-for="message in messages" :key="message.id">
-            <div class="bg-green-200 p-2 rounded-md">
-              <div class="mb-2 text-center" v-for="file in message.files" :key="file.id">
-                <img class="ml-auto rounded" style="max-height: 250px;" :src="filePath(file.id)" @load="scrollToMessagesBottom">
-              </div>
-
-              <span v-if="message.content">{{ message.content }}</span>
-
-              <button>Icon</button>
-
-              <!-- @click="deleteMessage(message)" v-if="isSentMessage(message)" -->
+            <button class="fixed inset-0 h-full w-full bg-black opacity-50 cursor-default focus:outline-none" tabindex="-1" v-if="chatMenu" @click="chatMenu = false"></button>
+            <div class="w-48 absolute bg-white right-0 mt-1 border rounded-md border-gray-200 shadow-md" v-if="chatMenu">
+              <ul class="py-2 text-sm text-gray-700">
+                <li>
+                  <router-link class="block px-3 py-2 hover:bg-gray-200" to="profile">Contact Info</router-link>
+                </li>
+                <li>
+                  <a class="block px-3 py-2 hover:bg-gray-200 cursor-pointer">Delete Chat</a>
+                </li>
+              </ul>
             </div>
           </li>
         </ul>
       </div>
+    </div>
 
-      <form class="w-2/3 h-16 fixed flex items-center px-2 border-t" @submit.prevent="sendMessage">
+    <div class="w-1/3 mt-16 border-r border-gray-200 overflow-auto" style="height: calc(100vh - 4rem)">
+      <ul class="cursor-pointer" v-if="chats.length">
+        <li class="flex items-center p-3 border-b hover:bg-gray-200" :class="{ 'bg-gray-300': chatIsActive(chat) }" v-for="chat in chats" :key="chat.id" @click="getChat(chat)">
+          <img class="h-12 w-12 rounded-full" :src="picture(chatUser(chat).picture)">
+            
+          <div class="w-full flex flex-col ml-2 overflow-hidden">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-900 truncate">{{ chatUser(chat).name }}</span>
+              <span class="ml-2 text-xs text-gray-700 whitespace-no-wrap">{{ dateFromNow(chat.created_at) }}</span>
+            </div>
+
+            <div class="flex justify-between items-center text-gray-800">
+              <span class="text-sm truncate">
+                <template v-if="isTyping(chatUser(chat))">Typing...</template>
+
+                <template v-else>
+                  <svg class="inline h-4 w-4" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor" v-if="chat.files.length"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg> <template v-if="chat.content">{{ chat.content }}</template>
+                </template>
+              </span>
+
+              <span class="px-2 ml-2 text-xs bg-gray-700 text-white rounded-full" v-if="chat.unread_count">
+                {{ chat.unread_count }}
+              </span>
+            </div>
+          </div>
+        </li>
+      </ul>
+
+      <div class="h-full flex flex-col justify-center items-center" v-else>
+        No chats.
+      </div>
+    </div>
+
+    <div ref="messages" class="w-2/3 mt-16 overflow-auto" style="height: calc(100vh - 8rem)" v-if="activeUser">
+      <ul class="p-3" v-if="messages.length">
+        <li class="w-7/12 flex" :class="{ 'ml-auto justify-end': isSentMessage(message), 'mt-3': messages.indexOf(message) !== 0 }" v-for="message in messages" :key="message.id">
+          <div class="relative bg-gray-200 rounded-md shadow-sm" @mouseover="hoveredMessage = message" @mouseleave="hoveredMessage = null">
+            <button class="absolute top-0 right-0 m-2 focus:outline-none" type="button" v-if="hoveredMessage === message || activeMessage === message" @click="activeMessage = message">
+              <svg class="h-4 w-4 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            <button class="fixed inset-0 h-full w-full bg-black opacity-50 cursor-default focus:outline-none z-10" tabindex="-1" v-if="activeMessage === message" @click="activeMessage = null"></button>
+            <div class="w-48 absolute bg-white right-0 mt-6 border rounded-md border-gray-200 shadow-md z-20" v-if="activeMessage === message">
+              <ul class="py-2 text-sm text-gray-700">
+                <li>
+                  <a class="block px-3 py-2 hover:bg-gray-200 cursor-pointer">Delete</a>
+                </li>
+              </ul>
+            </div>
+
+            <div class="p-1" v-if="message.files.length">
+              <a class="block cursor-pointer" :class="{ 'mt-1' : message.files.indexOf(file) !== 0 }" v-for="file in message.files" :key="file.id" @click="showFile(file)">
+                <img class="rounded-md" style="width: 20rem;" :src="filePath(file.id)" @load="scrollToMessagesBottom">
+              </a>
+            </div>
+            
+            <div class="flex flex-col px-2 py-1">
+              <span class="text-sm" v-if="message.content">
+                {{ message.content }}
+              </span>
+
+              <span class="self-end text-xs text-gray-700 whitespace-no-wrap" :title="formatDate(message.created_at)">
+                {{ dateFromNow(message.created_at) }}
+              </span>
+            </div>
+          </div>
+        </li>
+      </ul>
+
+      <div class="h-full flex flex-col justify-center items-center" v-else>
+        No messages.
+      </div>
+    </div>
+
+    <div class="w-2/3 bottom-0 right-0 h-16 fixed flex items-center px-2 border-t" v-if="activeUser">
+      <form class="w-full" @submit.prevent="sendMessage">
         <input ref="content" class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" type="text" v-model="form.content" @keyup="whisper" placeholder="Type a message">
       </form>
     </div>
@@ -132,7 +179,23 @@ export default {
       chats: [],
       messages: [],
       typings: [],
-      activeUser: null
+      activeUser: null,
+
+      userMenu: false,
+      chatMenu: false,
+      hoveredMessage: null,
+      activeMessage: null
+    }
+  },
+
+  /**
+   * The properties to be watched.
+   */
+  watch: {
+    messages() {
+      setTimeout(() => {
+        this.scrollToMessagesBottom()
+      }, 1)
     }
   },
 
@@ -143,15 +206,6 @@ export default {
     this.getChats()
     this.listenForTypings()
     this.listenForMessages()
-  },
-
-  /**
-   * Update the component.
-   */
-  updated() {
-    if (this.messages.length) {
-      this.scrollToMessagesBottom()
-    }
   },
 
   methods: {
@@ -196,19 +250,19 @@ export default {
       this.$echo.private(`App.User.${this.$bus.user.id}`)
         .listen('MessageSent', (e) => {
           if (this.chatIsActive(e.message)) {
+            e.message.unread_count = 0
+
             this.messages.push(e.message)
 
             this.readChat(e.message)
           } else {
-            this.notify(e.message)
-
-            let chat = this.chats.find(
-              chat => chat.chat_id === e.message.chat_id
-            )
+            let chat = this.chats.find(chat => chat.chat_id === e.message.chat_id)
 
             chat.unread_count++
 
             e.message.unread_count = chat.unread_count
+
+            this.notify(e.message)
           }
           
           this.$set(this.chats, this.findIndexForChat(e.message.chat_id), e.message)
@@ -399,6 +453,10 @@ export default {
 
         return ch.chat_id === chat.chat_id
       }
+    },
+
+    showFile() {
+      //
     },
 
     /**

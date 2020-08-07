@@ -77,17 +77,17 @@ Vue.mixin({
     },
 
     /**
-     * Truncate the given string.
-     */
-    truncate(string, size = 100) {
-      return string.length > size ? `${string.substr(0, size)}...` : string
-    },
-
-    /**
      * Get a human readable date.
      */
     dateFromNow(date) {
       return moment(date).fromNow()
+    },
+
+    /**
+     * Format the given date.
+     */
+    formatDate(date) {
+      return moment(date).format('YYYY-MM-DD HH:mm')
     }
   },
 })

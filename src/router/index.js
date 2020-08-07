@@ -2,7 +2,9 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
 import Login from '../views/Login.vue'
+import Profile from '../views/Profile.vue'
 import Register from '../views/Register.vue'
+import UsersShow from '../views/UsersShow.vue'
 
 Vue.use(VueRouter)
 
@@ -29,6 +31,18 @@ const routes = [
     name: 'login',
     component: Login,
     meta: { requiresAuth: false }
+  },
+  {
+    path: '/users/:id',
+    name: 'users.show',
+    component: UsersShow,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/profile',
+    name: 'profile',
+    component: Profile,
+    meta: { requiresAuth: true }
   }
 ]
 
