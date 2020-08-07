@@ -1,5 +1,10 @@
 <template>
   <div class="flex h-screen antialiased">
+    <div class="fixed h-full w-full flex justify-center items-center z-20" v-if="activeFile">
+      <button class="fixed h-full w-full cursor-default focus:outline-none bg-black opacity-75" @click="activeFile = null"></button>
+      <img class="relative max-w-screen-xl rounded-md" style="max-height: 95vh;" :src="filePath(activeFile.id)">
+    </div>
+
     <div class="w-full h-16 fixed flex z-10">
       <div class="w-1/3 flex justify-end bg-gray-100 p-2 border-b border-r border-gray-200">
         <ul class="flex items-center">
@@ -110,12 +115,12 @@
     <div ref="messages" class="w-2/3 mt-16 overflow-auto" style="height: calc(100vh - 8rem)" v-if="activeUser">
       <ul class="p-3" v-if="messages.length">
         <li class="w-7/12 flex" :class="{ 'ml-auto justify-end': isSentMessage(message), 'mt-3': messages.indexOf(message) !== 0 }" v-for="message in messages" :key="message.id">
-          <div class="relative bg-gray-200 rounded-md shadow-sm" @mouseover="hoveredMessage = message" @mouseleave="hoveredMessage = null">
+          <div class="relative bg-gray-200 rounded-md shadow-sm" :style="[ message.files.length ? { width: '20rem' } : ''  ]" @mouseover="hoveredMessage = message" @mouseleave="hoveredMessage = null">
             <button class="absolute top-0 right-0 m-2 focus:outline-none" type="button" v-if="hoveredMessage === message || activeMessage === message" @click="activeMessage = message">
               <svg class="h-4 w-4 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
             </button>
             <button class="fixed inset-0 h-full w-full bg-black opacity-50 cursor-default focus:outline-none z-10" tabindex="-1" v-if="activeMessage === message" @click="activeMessage = null"></button>
-            <div class="w-48 absolute bg-white right-0 mt-6 border rounded-md border-gray-200 shadow-md z-20" v-if="activeMessage === message">
+            <div class="w-48 absolute bg-white right-0 mt-6 mr-1 border rounded-md border-gray-200 shadow-md z-20" v-if="activeMessage === message">
               <ul class="py-2 text-sm text-gray-700">
                 <li>
                   <a class="block px-3 py-2 hover:bg-gray-200 cursor-pointer">Delete</a>
@@ -124,7 +129,7 @@
             </div>
 
             <div class="p-1" v-if="message.files.length">
-              <a class="block cursor-pointer" :class="{ 'mt-1' : message.files.indexOf(file) !== 0 }" v-for="file in message.files" :key="file.id" @click="showFile(file)">
+              <a class="block cursor-pointer" :class="{ 'mt-1' : message.files.indexOf(file) !== 0 }" v-for="file in message.files" :key="file.id" @click="activeFile = file">
                 <img class="rounded-md" style="width: 20rem;" :src="filePath(file.id)" @load="scrollToMessagesBottom">
               </a>
             </div>
@@ -184,7 +189,8 @@ export default {
       userMenu: false,
       chatMenu: false,
       hoveredMessage: null,
-      activeMessage: null
+      activeMessage: null,
+      activeFile: null
     }
   },
 
