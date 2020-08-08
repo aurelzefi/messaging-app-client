@@ -1,9 +1,7 @@
 <template>
   <div class="flex h-screen antialiased">
-    <div class="fixed h-full w-full flex justify-center items-center z-20" v-if="activeFile">
-      <button class="fixed h-full w-full cursor-default focus:outline-none bg-black opacity-75" @click="activeFile = null"></button>
-      <img class="relative max-w-screen-xl rounded-md" style="max-height: 95vh;" :src="filePath(activeFile.id)">
-    </div>
+    <file v-if="activeFile" :file="activeFile" :hide="unsetActiveFile"></file>
+    <user-search v-if="userSearch" :show="userSearch" :hide="() => userSearch = false" :method="startChat"></user-search>
 
     <div class="w-full h-16 fixed flex z-10">
       <div class="w-1/3 flex justify-end bg-gray-100 p-2 border-b border-r border-gray-200">
@@ -15,7 +13,7 @@
           </li>
 
           <li class="mr-4">
-            <button class="p-2 align-middle rounded-full outline-none focus:bg-gray-400 focus:outline-none" type="button">
+            <button class="p-2 align-middle rounded-full outline-none focus:bg-gray-400 focus:outline-none" type="button" @click="userSearch = true">
               <svg class="h-6 w-6 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
             </button>
           </li>
@@ -40,16 +38,14 @@
       </div>
 
       <div class="w-2/3 flex justify-between items-center bg-gray-100 border-gray-200 p-2 border-b" v-if="activeUser">        
-        <ul class="flex items-center">
-          <li>
-            <img class="h-10 w-10 rounded-full" :src="picture(activeUser.picture)">
-          </li>
-          
-          <li class="flex flex-col ml-3">
+        <router-link class="flex items-center" :to="{ name: 'users.show', params: { id: activeUser.id } }">
+          <img class="h-10 w-10 rounded-full" :src="picture(activeUser.picture)">
+
+          <div class="flex flex-col ml-3">
             <span class="text-gray-900">{{ activeUser.name }}</span>
             <span class="text-xs text-gray-700" v-if="isTyping(activeUser)">Typing...</span>
-          </li>
-        </ul>
+          </div>
+        </router-link>
 
         <ul class="flex items-center">
           <li class="mr-4">
@@ -116,7 +112,7 @@
       <ul class="p-3" v-if="messages.length">
         <li class="w-7/12 flex" :class="{ 'ml-auto justify-end': isSentMessage(message), 'mt-3': messages.indexOf(message) !== 0 }" v-for="message in messages" :key="message.id">
           <div class="relative bg-gray-200 rounded-md shadow-sm" :style="[ message.files.length ? { width: '20rem' } : ''  ]" @mouseover="hoveredMessage = message" @mouseleave="hoveredMessage = null">
-            <button class="absolute top-0 right-0 m-2 focus:outline-none" type="button" v-if="hoveredMessage === message || activeMessage === message" @click="activeMessage = message">
+            <button class="absolute top-0 right-0 m-2 focus:outline-none" type="button" v-if="isSentMessage(message) && (hoveredMessage === message || activeMessage === message)" @click="activeMessage = message">
               <svg class="h-4 w-4 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
             </button>
             <button class="fixed inset-0 h-full w-full bg-black opacity-50 cursor-default focus:outline-none z-10" tabindex="-1" v-if="activeMessage === message" @click="activeMessage = null"></button>
@@ -154,7 +150,7 @@
 
     <div class="w-2/3 bottom-0 right-0 h-16 fixed flex items-center px-2 border-t" v-if="activeUser">
       <form class="w-full" @submit.prevent="sendMessage">
-        <input ref="content" class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" type="text" v-model="form.content" @keyup="whisper" placeholder="Type a message">
+        <input ref="content" class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" type="text" v-model="form.content" v-focus @keyup="whisper" placeholder="Type a message">
       </form>
     </div>
 
@@ -168,8 +164,12 @@
 
 <script>
 import { remote } from 'electron'
+import File from '../components/File.vue'
+import UserSearch from '../components/UserSearch.vue'
 
 export default {
+  components: { File, UserSearch },
+
   /**
    * The component's data.
    */
@@ -184,13 +184,14 @@ export default {
       chats: [],
       messages: [],
       typings: [],
-      activeUser: null,
 
       userMenu: false,
       chatMenu: false,
       hoveredMessage: null,
+      userSearch: false,
+      activeUser: null,
       activeMessage: null,
-      activeFile: null
+      activeFile: null,
     }
   },
 
@@ -264,18 +265,18 @@ export default {
           } else {
             let chat = this.chats.find(chat => chat.chat_id === e.message.chat_id)
 
-            chat.unread_count++
+            if (chat) {
+              chat.unread_count++
 
-            e.message.unread_count = chat.unread_count
+              e.message.unread_count = chat.unread_count
+            } else {
+              e.message.unread_count = 1
+            }
 
             this.notify(e.message)
           }
           
-          this.$set(this.chats, this.findIndexForChat(e.message.chat_id), e.message)
-
-          this.chats.sort((a, b) => {
-            return a.id === e.message.id ? -1 : b === e.message.id ? 1 : 0;
-          });
+          this.updateChatsWithMessage(e.message)
 
           this.setBadgeCount()
         })
@@ -322,6 +323,22 @@ export default {
       }
     },
 
+    updateChatsWithMessage(message) {
+      let index = this.findIndexForChat(message.chat_id)
+
+      if (index === -1) {
+        this.chats.unshift(message)
+
+        return
+      }
+
+      this.$set(this.chats, index, message)
+      
+      this.chats.sort((a, b) => {
+        return a.id === message.id ? -1 : b === message.id ? 1 : 0;
+      });
+    },
+
     /**
      * Remove the chat if there are no more messages.
      */
@@ -338,7 +355,7 @@ export default {
      * Send a message.
      */
     sendMessage() {
-      if (this.form.content === '' && this.form.files.length === 0) {
+      if (this.form.content.length === 0 && this.form.files.length === 0) {
         return
       }
 
@@ -353,18 +370,14 @@ export default {
 
       this.$http.post(`/api/messages`, formData)
         .then(response => {
+          this.form.content = ''
+          this.form.files = []
+
           response.data.unread_count = 0
 
           this.messages.push(response.data)
 
-          this.form.content = ''
-          this.form.files = []
-
-          this.$set(this.chats, this.findIndexForChat(response.data.chat_id), response.data)
-
-          this.chats.sort((a, b) => {
-            return a.id === response.data.id ? -1 : b === response.data.id ? 1 : 0;
-          });
+          this.updateChatsWithMessage(response.data)
         })
         .catch(error => {
           this.errors = this.formatErrors(error.response.data.errors)
@@ -452,17 +465,19 @@ export default {
      * Determine if the given chat is active.
      */
     chatIsActive(chat) {
-      if (this.activeUser) {
-        let ch = this.chats.find(
-          ch => [ch.sender_id, ch.receiver_id].includes(this.activeUser.id)
-        )
+      if (! this.activeUser) {
+        return false
+      }
 
+      let ch = this.chats.find(
+        ch => [ch.sender_id, ch.receiver_id].includes(this.activeUser.id)
+      )
+
+      if (ch) {
         return ch.chat_id === chat.chat_id
       }
-    },
 
-    showFile() {
-      //
+      return false
     },
 
     /**
@@ -509,7 +524,27 @@ export default {
     isTyping(user) {
       return this.typings.includes(user.id)
     },
+    
+    unsetActiveFile() {
+      this.activeFile = null
+    },
 
+    startChat(user) {
+      let chat = this.chats.find(
+        chat => [chat.sender_id, chat.receiver_id].includes(user.id)
+      )
+
+      this.userSearch = false
+
+      if (chat) {
+        this.getChat(chat)
+
+        return
+      }
+
+      this.activeUser = user
+      this.messages = []
+    },
     /**
      * Set the badge count.  
      */

@@ -35,6 +35,12 @@ Vue.prototype.$echo = new Echo({
   }
 })
 
+Vue.directive('focus', {
+  inserted: function (el) {
+    el.focus()
+  }
+})
+
 Vue.mixin({
   methods: {
     /**
