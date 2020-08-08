@@ -35,12 +35,6 @@ Vue.prototype.$echo = new Echo({
   }
 })
 
-Vue.directive('focus', {
-  inserted: function (el) {
-    el.focus()
-  }
-})
-
 Vue.mixin({
   methods: {
     /**
@@ -94,8 +88,18 @@ Vue.mixin({
      */
     formatDate(date) {
       return moment(date).format('YYYY-MM-DD HH:mm')
+    },
+
+    time(date) {
+      return moment(date).format('HH:mm')
     }
   },
+})
+
+Vue.directive('focus', {
+  inserted: function (el) {
+    el.focus()
+  }
 })
 
 new Vue({

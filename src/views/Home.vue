@@ -1,7 +1,8 @@
 <template>
   <div class="flex h-screen antialiased">
-    <file v-if="activeFile" :file="activeFile" :hide="unsetActiveFile"></file>
-    <user-search v-if="userSearch" :show="userSearch" :hide="() => userSearch = false" :method="startChat"></user-search>
+    <file v-if="activeFile" :file="activeFile" :hide="() => activeFile = null"></file>
+    <users-search v-if="userSearch" :method="startChat" :hide="() => userSearch = false"></users-search>
+    <confirm v-if="modal.show" :data="modal" :hide="() => modal.show = false"></confirm>
 
     <div class="w-full h-16 fixed flex z-10">
       <div class="w-1/3 flex justify-end bg-gray-100 p-2 border-b border-r border-gray-200">
@@ -22,7 +23,7 @@
             <button class="p-2 align-middle rounded-full outline-none focus:bg-gray-400 focus:outline-none" type="button" @click="userMenu = ! userMenu">
               <svg class="h-6 w-6 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
             </button>
-            <button class="fixed inset-0 h-full w-full bg-black opacity-50 cursor-default focus:outline-none z-10" tabindex="-1" v-if="userMenu" @click="userMenu = false"></button>
+            <button class="fixed inset-0 h-full w-full cursor-default focus:outline-none z-10" tabindex="-1" v-if="userMenu" @click="userMenu = false"></button>
             <div class="w-48 absolute bg-white right-0 mt-1 border rounded-md border-gray-200 shadow-md z-20" v-if="userMenu">
               <ul class="py-2 text-sm text-gray-700">
                 <li>
@@ -59,14 +60,14 @@
             <button class="p-2 align-middle rounded-full outline-none focus:bg-gray-400 focus:outline-none" type="button" @click="chatMenu = ! chatMenu">
               <svg class="h-6 w-6 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
             </button>
-            <button class="fixed inset-0 h-full w-full bg-black opacity-50 cursor-default focus:outline-none" tabindex="-1" v-if="chatMenu" @click="chatMenu = false"></button>
+            <button class="fixed inset-0 h-full w-full cursor-default focus:outline-none" tabindex="-1" v-if="chatMenu" @click="chatMenu = false"></button>
             <div class="w-48 absolute bg-white right-0 mt-1 border rounded-md border-gray-200 shadow-md" v-if="chatMenu">
               <ul class="py-2 text-sm text-gray-700">
                 <li>
                   <router-link class="block px-3 py-2 hover:bg-gray-200" to="profile">Contact Info</router-link>
                 </li>
                 <li>
-                  <a class="block px-3 py-2 hover:bg-gray-200 cursor-pointer">Delete Chat</a>
+                  <a class="block px-3 py-2 hover:bg-gray-200 cursor-pointer" @click="openDeleteChatModal">Delete Chat</a>
                 </li>
               </ul>
             </div>
@@ -115,11 +116,11 @@
             <button class="absolute top-0 right-0 m-2 focus:outline-none" type="button" v-if="isSentMessage(message) && (hoveredMessage === message || activeMessage === message)" @click="activeMessage = message">
               <svg class="h-4 w-4 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
             </button>
-            <button class="fixed inset-0 h-full w-full bg-black opacity-50 cursor-default focus:outline-none z-10" tabindex="-1" v-if="activeMessage === message" @click="activeMessage = null"></button>
+            <button class="fixed inset-0 h-full w-full cursor-default focus:outline-none z-10" tabindex="-1" v-if="activeMessage === message" @click="activeMessage = null"></button>
             <div class="w-48 absolute bg-white right-0 mt-6 mr-1 border rounded-md border-gray-200 shadow-md z-20" v-if="activeMessage === message">
               <ul class="py-2 text-sm text-gray-700">
                 <li>
-                  <a class="block px-3 py-2 hover:bg-gray-200 cursor-pointer">Delete</a>
+                  <a class="block px-3 py-2 hover:bg-gray-200 cursor-pointer" @click="openDeleteMessageModal">Delete</a>
                 </li>
               </ul>
             </div>
@@ -136,7 +137,7 @@
               </span>
 
               <span class="self-end text-xs text-gray-700 whitespace-no-wrap" :title="formatDate(message.created_at)">
-                {{ dateFromNow(message.created_at) }}
+                {{ time(message.created_at) }}
               </span>
             </div>
           </div>
@@ -164,11 +165,12 @@
 
 <script>
 import { remote } from 'electron'
+import Confirm from '../components/Confirm.vue'
 import File from '../components/File.vue'
-import UserSearch from '../components/UserSearch.vue'
+import UsersSearch from '../components/UsersSearch.vue'
 
 export default {
-  components: { File, UserSearch },
+  components: { Confirm, File, UsersSearch },
 
   /**
    * The component's data.
@@ -192,6 +194,13 @@ export default {
       activeUser: null,
       activeMessage: null,
       activeFile: null,
+
+      modal: {
+        show: false,
+        title: '',
+        body: '',
+        method: null
+      }
     }
   },
 
@@ -256,7 +265,7 @@ export default {
     listenForMessages() {
       this.$echo.private(`App.User.${this.$bus.user.id}`)
         .listen('MessageSent', (e) => {
-          if (this.chatIsActive(e.message)) {
+          if (this.chatIsActive(e.message) || this.activeUser) {
             e.message.unread_count = 0
 
             this.messages.push(e.message)
@@ -265,13 +274,7 @@ export default {
           } else {
             let chat = this.chats.find(chat => chat.chat_id === e.message.chat_id)
 
-            if (chat) {
-              chat.unread_count++
-
-              e.message.unread_count = chat.unread_count
-            } else {
-              e.message.unread_count = 1
-            }
+            e.message.unread_count = chat ? ++chat.unread_count : 1
 
             this.notify(e.message)
           }
@@ -281,15 +284,30 @@ export default {
           this.setBadgeCount()
         })
         .listen('MessageUnsent', (e) => {
-          if (this.chatIsActive(e.message)) {
-            this.messages.splice(
-              this.messages.findIndex(m => m.id === e.message.id), 1
-            )
+          let chat = this.chats.find(chat => chat.chat_id === e.message.chat_id)
 
-            return
+          if (! e.message.read_at) {
+            chat.unread_count--
           }
 
-          this.removeChatIfNoMessages(e.message.chat_id)
+          if (this.chatIsActive(e.message)) {
+            this.messages.splice(
+              this.messages.findIndex(message => message.id === e.message.id), 1
+            )
+          }
+
+          this.updateChatOnMessageUnsent(chat)
+        })
+        .listen('ChatDeleted', (e) => {
+          let chat = this.chats.find(
+            chat => [chat.sender_id, chat.receiver_id].includes(e.user.id)
+          )
+
+          if (this.chatIsActive(chat)) {
+            this.activeUser = null
+          }
+
+          this.chats.splice(this.findIndexForChat(chat.chat_id), 1)
         })
     },
 
@@ -340,13 +358,19 @@ export default {
     },
 
     /**
-     * Remove the chat if there are no more messages.
+     * Update the given chat when a message has been unsent.
      */
-    removeChatIfNoMessages(chatId) {
-      this.$http.get(`/api/chats/${chatId}`)
+    updateChatOnMessageUnsent(chat) {
+      this.$http.get(`/api/chats/${chat.chat_id}`)
         .then(response => {
           if (response.data.length === 0) {
-            this.chats.splice(this.findIndexForChat(chatId), 1)
+            this.chats.splice(this.findIndexForChat(chat.chat_id), 1)
+          } else {
+            let message = response.data[response.data.length - 1]
+
+            message.unread_count = chat.unread_count
+
+            this.updateChatsWithMessage(message)
           }
         })
     },
@@ -392,27 +416,43 @@ export default {
     },
 
     /**
-     * Delete the given message.
+     * Delete the given chat.
      */
-    deleteMessage(message) {
-      this.$http.delete(`/api/messages/${message.id}`)
-        .then(() => {
-          this.messages.splice(this.messages.indexOf(message),  1)
+    deleteChat() {
+      let chat = this.chats.find(
+        chat => [chat.sender_id, chat.receiver_id].includes(this.activeUser.id)
+      )
 
-          if (this.messages.length === 0) {
-            this.chats.splice(this.findIndexForChat(message.chat_id), 1)
+      this.$http.delete(`/api/chats/${chat.chat_id}`)
+        .then(() => {
+          this.chats.splice(this.findIndexForChat(chat.chat_id), 1)
+
+          if (this.chatIsActive(chat)) {
+            this.activeUser = null
           }
-        })
+
+          this.modal.show = false
+        });
     },
 
     /**
-     * Delete the given chat.
+     * Delete the given message.
      */
-    deleteChat(chatId) {
-      this.$http.delete(`/api/chats/${chatId}`)
+    deleteMessage() {
+      this.$http.delete(`/api/messages/${this.activeMessage.id}`)
         .then(() => {
-          this.chats.splice(this.findIndexForChat(chatId), 1)
-        });
+          this.messages.splice(this.messages.indexOf(this.activeMessage),  1)
+
+          let index = this.findIndexForChat(this.activeMessage.chat_id)
+
+          if (this.messages.length === 0) {
+            this.chats.splice(index, 1)
+          } else {
+            this.$set(this.chats, index, this.messages[this.messages.length - 1])
+          }
+
+          this.modal.show = false
+        })
     },
 
     /**
@@ -524,10 +564,6 @@ export default {
     isTyping(user) {
       return this.typings.includes(user.id)
     },
-    
-    unsetActiveFile() {
-      this.activeFile = null
-    },
 
     startChat(user) {
       let chat = this.chats.find(
@@ -545,6 +581,21 @@ export default {
       this.activeUser = user
       this.messages = []
     },
+
+    openDeleteChatModal() {
+      this.modal.show = true
+      this.modal.title = 'Delete Chat'
+      this.modal.body = 'Are you sure you want to delete this chat?'
+      this.modal.method = this.deleteChat
+    },
+
+    openDeleteMessageModal() {
+      this.modal.show = true
+      this.modal.title = 'Delete Message'
+      this.modal.body = 'Are you sure you want to delete this message?'
+      this.modal.method = this.deleteMessage
+    },
+
     /**
      * Set the badge count.  
      */
