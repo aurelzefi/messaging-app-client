@@ -62,11 +62,24 @@ Vue.mixin({
       this.$router.push('/home')
     },
 
+    handleAfterLogout() {
+      this.$echo.leave(`typing.${this.$bus.user.id}`)
+      this.$echo.leave(`App.User.${this.$bus.user.id}`)
+
+      this.$bus.user = null
+      
+      localStorage.removeItem('token')
+      
+      delete this.$http.defaults.headers.Authorization
+      
+      this.$router.push('/')
+    },
+
     /** 
      * Get the full URL for the given picture.
     */
     picture(name) {
-      return `${API_URL}/pictures/${name}`
+      return `${API_URL}/${name}`
     },
 
     /**

@@ -8,7 +8,7 @@
       <div class="w-1/3 flex justify-end bg-gray-100 p-2 border-b border-r border-gray-200">
         <ul class="flex items-center">
           <li class="mr-4">
-            <router-link class="block p-2" to="profile">
+            <router-link class="block p-2" to="/settings">
               <img class="h-10 w-10 rounded-full" :src="picture($bus.user.picture)">
             </router-link>
           </li>
@@ -27,7 +27,7 @@
             <div class="w-48 absolute bg-white right-0 mt-1 border rounded-md border-gray-200 shadow-md z-20" v-if="userMenu">
               <ul class="py-2 text-sm text-gray-700">
                 <li>
-                  <router-link class="block px-3 py-2 hover:bg-gray-200" to="profile">Settings</router-link>
+                  <router-link class="block px-3 py-2 hover:bg-gray-200" to="/settings">Settings</router-link>
                 </li>
                 <li>
                   <a class="block px-3 py-2 hover:bg-gray-200 cursor-pointer" @click="logout">Log out</a>
@@ -64,7 +64,7 @@
             <div class="w-48 absolute bg-white right-0 mt-1 border rounded-md border-gray-200 shadow-md" v-if="chatMenu">
               <ul class="py-2 text-sm text-gray-700">
                 <li>
-                  <router-link class="block px-3 py-2 hover:bg-gray-200" to="profile">Contact Info</router-link>
+                  <router-link class="block px-3 py-2 hover:bg-gray-200" :to="{ name: 'users.show', params: { id: activeUser.id } }">Contact Info</router-link>
                 </li>
                 <li>
                   <a class="block px-3 py-2 hover:bg-gray-200 cursor-pointer" @click="openDeleteChatModal">Delete Chat</a>
@@ -461,16 +461,7 @@ export default {
     logout() {
       this.$http.delete(`/api/tokens/${this.tokenId()}`)
         .then(() => {
-          this.$echo.leave(`typing.${this.$bus.user.id}`)
-          this.$echo.leave(`App.User.${this.$bus.user.id}`)
-
-          this.$bus.user = null
-          
-          localStorage.removeItem('token')
-          
-          delete this.$http.defaults.headers.Authorization
-          
-          this.$router.push('/')
+          this.handleAfterLogout()
         })
     },
 

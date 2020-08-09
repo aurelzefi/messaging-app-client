@@ -19,7 +19,7 @@
         </div>
 
         <div class="flex justify-between items-center mt-4 text-sm">
-          <button class="py-2 px-4 bg-gray-800 hover:bg-gray-700 rounded text-white outline-none focus:outline-none" type="submit">Login</button>
+          <button class="py-2 px-4 bg-gray-800 hover:bg-gray-700 rounded text-white focus:outline-none" type="submit">Login</button>
             
           <div class="text-gray-700">
             Don't have an account? <router-link class="px-1 hover:underline" to="register">Register</router-link>
