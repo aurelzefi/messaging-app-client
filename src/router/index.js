@@ -3,8 +3,8 @@ import VueRouter from 'vue-router'
 import Home from '../views/Home.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
-import UsersShow from '../views/UsersShow.vue'
 import Settings from '../views/Settings.vue'
+import UsersShow from '../views/Users/Show.vue'
 
 Vue.use(VueRouter)
 
@@ -35,6 +35,7 @@ const routes = [
   {
     path: '/users/:id',
     name: 'users.show',
+    props: true,
     component: UsersShow,
     meta: { requiresAuth: true }
   },

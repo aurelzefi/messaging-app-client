@@ -1,7 +1,7 @@
 <template>
   <div class="flex h-screen antialiased">
     <file v-if="activeFile" :file="activeFile" :hide="() => activeFile = null"></file>
-    <users-search v-if="userSearch" :method="startChat" :hide="() => userSearch = false"></users-search>
+    <new-chat v-if="newChat" :method="startChat" :hide="() => newChat = false"></new-chat>
     <confirm v-if="modal.show" :data="modal" :hide="() => modal.show = false"></confirm>
 
     <div class="w-full h-16 fixed flex z-10">
@@ -14,7 +14,7 @@
           </li>
 
           <li class="mr-4">
-            <button class="p-2 align-middle rounded-full outline-none focus:bg-gray-400 focus:outline-none" type="button" @click="userSearch = true">
+            <button class="p-2 align-middle rounded-full outline-none focus:bg-gray-400 focus:outline-none" type="button" @click="newChat = true">
               <svg class="h-6 w-6 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
             </button>
           </li>
@@ -167,10 +167,10 @@
 import { remote } from 'electron'
 import Confirm from '../components/Confirm.vue'
 import File from '../components/File.vue'
-import UsersSearch from '../components/UsersSearch.vue'
+import NewChat from '../components/NewChat.vue'
 
 export default {
-  components: { Confirm, File, UsersSearch },
+  components: { Confirm, File, NewChat },
 
   /**
    * The component's data.
@@ -190,7 +190,7 @@ export default {
       userMenu: false,
       chatMenu: false,
       hoveredMessage: null,
-      userSearch: false,
+      newChat: false,
       activeUser: null,
       activeMessage: null,
       activeFile: null,
@@ -561,7 +561,7 @@ export default {
         chat => [chat.sender_id, chat.receiver_id].includes(user.id)
       )
 
-      this.userSearch = false
+      this.newChat = false
 
       if (chat) {
         this.getChat(chat)

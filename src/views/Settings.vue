@@ -1,8 +1,8 @@
 <template>
-  <div class="antialiased flex flex-col items-center text-sm">
+  <div class="antialiased flex flex-col items-center">
     <confirm v-if="modal.show" :data="modal" :hide="() => modal.show = false"></confirm>
 
-    <router-link class="fixed top-0 left-0 ml-2 mt-2 rounded-md hover:bg-gray-200" to="/home">
+    <router-link class="fixed top-0 left-0 ml-2 mt-2 p-2 rounded-md hover:bg-gray-200" to="/home">
       <svg class="chevron-left w-8 h-8 text-gray-700" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
     </router-link>
 
@@ -11,24 +11,20 @@
         Picture
       </div>
 
-      <div class="p-3">
-        <div class="p-3 bg-green-700 text-white rounded" v-if="pictureForm.success">
+      <div class="p-3 text-sm">
+        <div class="p-4 bg-green-500 text-white rounded" v-if="pictureForm.success">
           The profile picture has been updated.
         </div>
 
-        <div class="w-full flex mt-4">
-          <div class="w-1/3"></div>
-          <div class="w-2/3">
-            <img class="w-40 h-40 rounded-full" :src="picture($bus.user.picture)">
-          </div>
+        <div class="p-4 bg-red-500 text-white rounded" v-if="pictureForm.errors.picture">
+          {{ pictureForm.errors.picture }}
         </div>
 
-        <div class="w-full flex mt-4">
-          <div class="w-1/3"></div>
-          <div class="w-2/3">
+        <div class="flex flex-col items-center mt-4">
+            <img class="w-40 h-40 rounded-full" :src="picture($bus.user.picture)">
+
             <input class="hidden" type="file" ref="picture" @change="updatePicture">
-            <button class="py-2 px-4 bg-gray-800 hover:bg-gray-700 rounded text-white focus:outline-none" type="button"  @click="openFileBrowser">Update</button>
-          </div>
+            <button class="px-4 py-2 mt-4 bg-gray-800 hover:bg-gray-700 rounded text-white focus:outline-none" type="button" @click="openFileBrowser">Update</button>
         </div>
       </div>
     </div>
@@ -38,8 +34,8 @@
         Information
       </div>
 
-      <div class="p-3">
-        <div class="p-3 bg-green-700 text-white rounded" v-if="informationForm.success">
+      <div class="p-3 text-sm">
+        <div class="p-4 bg-green-500 text-white rounded" v-if="informationForm.success">
           The account information has been updated.
         </div>
 
@@ -58,7 +54,7 @@
             <div class="w-full flex">
               <div class="w-1/3"></div>
               <div class="w-2/3"> 
-                <span class="inline text-xs text-red-700">{{ this.informationForm.errors.name }}</span>
+                <span class="text-xs text-red-700">{{ this.informationForm.errors.name }}</span>
               </div>
             </div>
           </div>
@@ -97,8 +93,8 @@
         Password
       </div>
 
-      <div class="p-3">
-        <div class="p-3 bg-green-700 text-white rounded" v-if="passwordForm.success">
+      <div class="p-3 text-sm">
+        <div class="p-4 bg-green-500 text-white rounded" v-if="passwordForm.success">
           The password has been updated.
         </div>
 
@@ -117,7 +113,7 @@
             <div class="w-full flex">
               <div class="w-1/3"></div>
               <div class="w-2/3"> 
-                <span class="inline text-xs text-red-700">{{ this.passwordForm.errors.password }}</span>
+                <span class="text-xs text-red-700">{{ this.passwordForm.errors.password }}</span>
               </div>
             </div>
           </div>
@@ -136,7 +132,7 @@
             <div class="w-full flex">
               <div class="w-1/3"></div>
               <div class="w-2/3"> 
-                <span class="inline text-xs text-red-700">{{ this.passwordForm.errors.new_password }}</span>
+                <span class="text-xs text-red-700">{{ this.passwordForm.errors.new_password }}</span>
               </div>
             </div>
           </div>
@@ -155,7 +151,7 @@
             <div class="w-full flex">
               <div class="w-1/3"></div>
               <div class="w-2/3"> 
-                <span class="inline text-xs text-red-700">{{ this.passwordForm.errors.new_password_confirmation }}</span>
+                <span class="text-xs text-red-700">{{ this.passwordForm.errors.new_password_confirmation }}</span>
               </div>
             </div>
           </div>
@@ -175,13 +171,14 @@
         Delete Account
       </div>
 
-      <div class="w-full flex p-3">
-        <div class="w-1/3"></div>
-        <div class="w-2/3">
-          <button class="px-4 py-2 bg-red-600 hover:bg-red-500 rounded text-white outline-none focus:outline-none" type="button" @click="openDeleteModal">
-            Delete Account
-          </button>
+      <div class="p-3 text-sm">
+        <div class="p-4 bg-orange-200 text-orange-800 rounded">
+          This action will delete all your data and is not reversible.
         </div>
+
+        <button class="px-4 py-2 mt-4 bg-red-600 hover:bg-red-500 rounded text-white focus:outline-none" type="button" @click="openDeleteAccountModal">
+          Delete Account
+        </button>
       </div>
     </div>
   </div>
@@ -275,18 +272,18 @@ export default {
         });
     },
 
-    destroy() {
+    deleteAccount() {
       this.$http.delete('/api/user')
         .then(() => {
           this.handleAfterLogout()
         })
     },
 
-    openDeleteModal() {
+    openDeleteAccountModal() {
       this.modal.show = true
       this.modal.title = 'Delete Account'
-      this.modal.body = 'Are you sure you want to delete this account?'
-      this.modal.method = this.destroy
+      this.modal.body = 'Are you sure you want to delete your account?'
+      this.modal.method = this.deleteAccount
     },
 
     openFileBrowser() {
