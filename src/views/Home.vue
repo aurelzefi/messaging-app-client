@@ -9,7 +9,7 @@
         <ul class="flex items-center">
           <li class="mr-4">
             <router-link class="block p-2" to="/settings">
-              <img class="h-10 w-10 rounded-full" :src="picture($bus.user.picture)">
+              <img class="h-10 w-10 rounded-full" :src="picture($bus.user)">
             </router-link>
           </li>
 
@@ -40,7 +40,7 @@
 
       <div class="w-2/3 flex justify-between items-center bg-gray-100 border-gray-200 p-2 border-b" v-if="activeUser">        
         <router-link class="flex items-center" :to="{ name: 'users.show', params: { id: activeUser.id } }">
-          <img class="h-10 w-10 rounded-full" :src="picture(activeUser.picture)">
+          <img class="h-10 w-10 rounded-full" :src="picture(activeUser)">
 
           <div class="flex flex-col ml-3">
             <span class="text-gray-900">{{ activeUser.name }}</span>
@@ -79,7 +79,7 @@
     <div class="w-1/3 mt-16 border-r border-gray-200 overflow-auto" style="height: calc(100vh - 4rem)">
       <ul class="cursor-pointer" v-if="chats.length">
         <li class="flex items-center p-3 border-b hover:bg-gray-200" :class="{ 'bg-gray-300': chatIsActive(chat) }" v-for="chat in chats" :key="chat.id" @click="getChat(chat)">
-          <img class="h-12 w-12 rounded-full" :src="picture(chatUser(chat).picture)">
+          <img class="h-12 w-12 rounded-full" :src="picture(chatUser(chat))">
             
           <div class="w-full flex flex-col ml-2 overflow-hidden">
             <div class="flex justify-between items-center">
@@ -110,41 +110,49 @@
     </div>
 
     <div ref="messages" class="w-2/3 mt-16 overflow-auto" style="height: calc(100vh - 8rem)" v-if="activeUser">
-      <ul class="p-3" v-if="messages.length">
-        <li class="w-7/12 flex flex-col" :class="{ 'ml-auto justify-end items-end': isSentMessage(message), 'items-start': ! isSentMessage(message), 'mt-3': messages.indexOf(message) > 0 }" v-for="message in messages" :key="message.id">
-          <div class="relative bg-gray-200 rounded-md shadow-sm" :style="[ message.files.length ? { width: '20rem' } : ''  ]" @mouseover="hoveredMessage = message" @mouseleave="hoveredMessage = null">
-            <button class="absolute top-0 right-0 m-2 focus:outline-none" type="button" v-if="isSentMessage(message) && (hoveredMessage === message || activeMessage === message)" @click="activeMessage = message">
-              <svg class="h-4 w-4 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
-            </button>
-            <button class="fixed inset-0 h-full w-full cursor-default focus:outline-none z-10" tabindex="-1" v-if="activeMessage === message" @click="activeMessage = null"></button>
-            <div class="w-48 absolute bg-white right-0 mt-6 mr-1 border rounded-md border-gray-200 shadow-md z-20" v-if="activeMessage === message">
-              <ul class="py-2 text-sm text-gray-700">
-                <li>
-                  <a class="block px-3 py-2 hover:bg-gray-200 cursor-pointer" @click="openDeleteMessageModal">Delete</a>
-                </li>
-              </ul>
-            </div>
+      <div class="p-3" v-if="Object.keys(groupedMessages).length">
+        <div :class=" { 'mt-3': index > 0 }" v-for="(messages, date, index) in groupedMessages" :key="date">
+          <div class="text-sm text-center text-gray-700">{{ date }}</div>
 
-            <div class="p-1" v-if="message.files.length">
-              <a class="block cursor-pointer" :class="{ 'mt-1': message.files.indexOf(file) > 0 }" v-for="file in message.files" :key="file.id" @click="activeFile = file">
-                <img class="rounded-md" style="width: 20rem;" :src="filePath(file.id)" @load="scrollToMessagesBottom">
-              </a>
-            </div>
-            
-            <div class="flex flex-col px-2 py-1">
-              <span class="text-sm" v-if="message.content">
-                {{ message.content }}
+          <ul class="mt-3">
+            <li class="w-7/12 flex flex-col" :class="{ 'ml-auto justify-end items-end': isSentMessage(message), 'items-start': ! isSentMessage(message), 'mt-3': messages.indexOf(message) > 0 }" v-for="message in messages" :key="message.id">
+              <div class="relative bg-gray-200 rounded-md shadow-sm" :style="[ message.files.length ? { width: '20rem' } : ''  ]" @mouseover="hoveredMessage = message" @mouseleave="hoveredMessage = null">
+                <button class="absolute top-0 right-0 m-2 focus:outline-none" type="button" v-if="isSentMessage(message) && (hoveredMessage === message || activeMessage === message)" @click="activeMessage = message">
+                  <svg class="h-4 w-4 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <button class="fixed inset-0 h-full w-full cursor-default focus:outline-none z-10" tabindex="-1" v-if="activeMessage === message" @click="activeMessage = null"></button>
+                <div class="w-48 absolute bg-white right-0 mt-6 mr-1 border rounded-md border-gray-200 shadow-md z-20" v-if="activeMessage === message">
+                  <ul class="py-2 text-sm text-gray-700">
+                    <li>
+                      <a class="block px-3 py-2 hover:bg-gray-200 cursor-pointer" @click="openDeleteMessageModal">Delete</a>
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="p-1" v-if="message.files.length">
+                  <a class="block cursor-pointer" :class="{ 'mt-1': message.files.indexOf(file) > 0 }" v-for="file in message.files" :key="file.id" @click="activeFile = file">
+                    <img class="rounded-md" style="width: 20rem;" :src="getFile(file)" @load="scrollToMessagesBottom">
+                  </a>
+                </div>
+                
+                <div class="flex flex-col px-2 py-1">
+                  <span class="text-sm" v-if="message.content">
+                    {{ message.content }}
+                  </span>
+
+                  <span class="self-end text-xs text-gray-700">
+                    {{ time(message.created_at) }}
+                  </span>
+                </div>
+              </div>
+
+              <span class="self-end mt-1 text-xs text-gray-700" :title="dateTime(message.read_at)" v-if="showReadAt(message)">
+                Read at {{ time(message.read_at) }}
               </span>
-
-              <span class="self-end text-xs text-gray-700 whitespace-no-wrap">
-                {{ time(message.created_at) }}
-              </span>
-            </div>
-          </div>
-
-          <span class="self-end mt-1 text-xs text-gray-700 whitespace-no-wrap" v-if="isSentMessage(message) && message.read_at">Read at {{ time(message.read_at) }}</span>
-        </li>
-      </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
 
       <div class="h-full flex flex-col justify-center items-center" v-else>
         No messages.
@@ -166,6 +174,7 @@
 </template>
 
 <script>
+import _ from 'lodash'
 import { remote } from 'electron'
 import Confirm from '../components/Confirm.vue'
 import File from '../components/File.vue'
@@ -203,6 +212,21 @@ export default {
         body: '',
         method: null
       }
+    }
+  },
+
+  /**
+   * The component's computed properties.
+   */
+  computed: {
+    tokenId() {
+      return localStorage.getItem('token').split('|')[0]
+    },
+
+    groupedMessages() {
+      console.log(this.messages)
+
+      return _.groupBy(this.messages, (m) => this.date(m.created_at))
     }
   },
 
@@ -487,7 +511,7 @@ export default {
      * Log the user out of the application.
      */
     logout() {
-      this.$http.delete(`/api/tokens/${this.tokenId()}`)
+      this.$http.delete(`/api/tokens/${this.tokenId}`)
         .then(() => {
           this.handleAfterLogout()
         })
@@ -547,13 +571,6 @@ export default {
     },
 
     /**
-     * Get the ID for the token.
-     */
-    tokenId() {
-      return localStorage.getItem('token').split('|')[0]
-    },
-
-    /**
      * Open the file browser to choose files.
      */
     openFileBrowser() {
@@ -573,7 +590,7 @@ export default {
     notify(message) {
       new Notification(message.sender.name, {
         body: message.content ?? '',
-        icon: this.picture(message.sender.picture)
+        icon: this.picture(message.sender)
       })
     },
 
@@ -584,6 +601,9 @@ export default {
       return this.typings.includes(user.id)
     },
 
+    /**
+     * Start a new chat with the given user.
+     */
     startChat(user) {
       let chat = this.chats.find(
         chat => [chat.sender_id, chat.receiver_id].includes(user.id)
@@ -601,6 +621,9 @@ export default {
       this.messages = []
     },
 
+    /**
+     * Open the delete chat modal.
+     */
     openDeleteChatModal() {
       this.modal.show = true
       this.modal.title = 'Delete Chat'
@@ -608,6 +631,9 @@ export default {
       this.modal.method = this.deleteChat
     },
 
+    /**
+     * Open the delete message modal.
+     */
     openDeleteMessageModal() {
       this.modal.show = true
       this.modal.title = 'Delete Message'
@@ -622,6 +648,22 @@ export default {
       remote.app.setBadgeCount(
         this.chats.filter(chat => chat.unread_count > 0).length
       )
+    },
+
+    /**
+     * Determine if the "read at" time should be shown.
+     */
+    showReadAt(message) {
+      const date = this.date(message.created_at)
+
+      const index = Object.keys(this.groupedMessages).findIndex(d => d === date)
+
+      const group = this.groupedMessages[date]
+
+      return this.isSentMessage(message) &
+        index === Object.keys(this.groupedMessages).length - 1 & 
+        group.indexOf(message) === group.length - 1 &
+        !! message.read_at
     }
   }
 }

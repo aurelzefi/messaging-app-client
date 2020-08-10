@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import Vue from 'vue'
 import App from './App.vue'
 import axios from 'axios'
@@ -41,13 +42,7 @@ Vue.mixin({
      * Format the given errors.
      */
     formatErrors(errors) {
-      const items = {}
-
-      for (let key in errors) {
-        items[key] = errors[key][0]
-      }
-
-      return items
+      return _.mapValues(errors, error => error[0])
     },
 
     /**
@@ -62,6 +57,9 @@ Vue.mixin({
       this.$router.push('/home')
     },
 
+    /**
+     * Handle the after logout actions.
+     */
     handleAfterLogout() {
       this.$echo.leave(`typing.${this.$bus.user.id}`)
       this.$echo.leave(`App.User.${this.$bus.user.id}`)
@@ -78,35 +76,49 @@ Vue.mixin({
     /** 
      * Get the full URL for the given picture.
     */
-    picture(name) {
-      return `${API_URL}/${name}`
+    picture(user) {
+      if (user.picture) {
+        return `${API_URL}/${user.picture}`
+      }
+
+      return '/user.png'
     },
 
     /**
-     * Get the full URL for the given file.
+     * Get the URL for the given file.
      */
-    filePath(id) {
-      return `${API_URL}/api/files/${id}?api_token=${localStorage.getItem('token')}`
+    getFile(file) {
+      return `${API_URL}/api/files/${file.id}?api_token=${localStorage.getItem('token')}`
     },
 
     /**
-     * Get a human readable date.
+     * Get the date from now.
      */
-    dateFromNow(date) {
-      return moment(date).fromNow()
+    dateFromNow(timestamp) {
+      return moment(timestamp).fromNow()
     },
 
     /**
-     * Format the given date.
+     * Get the date from the given timestamp.
      */
-    formatDate(date) {
-      return moment(date).format('YYYY-MM-DD HH:mm')
+    date(timestamp) {
+      return moment(timestamp).format('YYYY-MM-DD')
     },
 
-    time(date) {
-      return moment(date).format('HH:mm')
+    /** 
+     * Get the time from the given timestamp. 
+     */
+    time(timestamp) {
+      return moment(timestamp).format('HH:mm')
+    },
+
+    /** 
+     * Get the date and time from the given timestamp. 
+     */
+    dateTime(timestamp) {
+      return moment(timestamp).format('YYYY-MM-DD HH:mm')
     }
-  },
+  }
 })
 
 Vue.directive('focus', {

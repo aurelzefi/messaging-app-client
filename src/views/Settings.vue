@@ -21,7 +21,7 @@
         </div>
 
         <div class="flex flex-col items-center mt-4">
-            <img class="w-40 h-40 rounded-full" :src="picture($bus.user.picture)">
+            <img class="w-40 h-40 rounded-full" :src="picture($bus.user)">
 
             <input class="hidden" type="file" ref="picture" @change="updatePicture">
             <button class="px-4 py-2 mt-4 bg-gray-800 hover:bg-gray-700 rounded text-white focus:outline-none" type="button" @click="openFileBrowser">Update</button>
