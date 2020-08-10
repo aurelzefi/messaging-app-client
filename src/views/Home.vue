@@ -111,7 +111,7 @@
 
     <div ref="messages" class="w-2/3 mt-16 overflow-auto" style="height: calc(100vh - 8rem)" v-if="activeUser">
       <ul class="p-3" v-if="messages.length">
-        <li class="w-7/12 flex" :class="{ 'ml-auto justify-end': isSentMessage(message), 'mt-3': messages.indexOf(message) !== 0 }" v-for="message in messages" :key="message.id">
+        <li class="w-7/12 flex flex-col" :class="{ 'ml-auto justify-end items-end': isSentMessage(message), 'items-start': ! isSentMessage(message), 'mt-3': messages.indexOf(message) > 0 }" v-for="message in messages" :key="message.id">
           <div class="relative bg-gray-200 rounded-md shadow-sm" :style="[ message.files.length ? { width: '20rem' } : ''  ]" @mouseover="hoveredMessage = message" @mouseleave="hoveredMessage = null">
             <button class="absolute top-0 right-0 m-2 focus:outline-none" type="button" v-if="isSentMessage(message) && (hoveredMessage === message || activeMessage === message)" @click="activeMessage = message">
               <svg class="h-4 w-4 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
@@ -126,7 +126,7 @@
             </div>
 
             <div class="p-1" v-if="message.files.length">
-              <a class="block cursor-pointer" :class="{ 'mt-1' : message.files.indexOf(file) !== 0 }" v-for="file in message.files" :key="file.id" @click="activeFile = file">
+              <a class="block cursor-pointer" :class="{ 'mt-1': message.files.indexOf(file) > 0 }" v-for="file in message.files" :key="file.id" @click="activeFile = file">
                 <img class="rounded-md" style="width: 20rem;" :src="filePath(file.id)" @load="scrollToMessagesBottom">
               </a>
             </div>
@@ -136,11 +136,13 @@
                 {{ message.content }}
               </span>
 
-              <span class="self-end text-xs text-gray-700 whitespace-no-wrap" :title="formatDate(message.created_at)">
+              <span class="self-end text-xs text-gray-700 whitespace-no-wrap">
                 {{ time(message.created_at) }}
               </span>
             </div>
           </div>
+
+          <span class="self-end mt-1 text-xs text-gray-700 whitespace-no-wrap" v-if="isSentMessage(message) && message.read_at">Read at {{ time(message.read_at) }}</span>
         </li>
       </ul>
 
@@ -265,7 +267,7 @@ export default {
     listenForMessages() {
       this.$echo.private(`App.User.${this.$bus.user.id}`)
         .listen('MessageSent', (e) => {
-          if (this.chatIsActive(e.message) || this.activeUser) {
+          if (this.activeUser && this.activeUser.id === e.message.sender_id) {
             e.message.unread_count = 0
 
             this.messages.push(e.message)
@@ -282,6 +284,9 @@ export default {
           this.updateChatsWithMessage(e.message)
 
           this.setBadgeCount()
+        })
+        .listen('MessageRead', (e) => {
+          this.handleMessageRead(e.message)
         })
         .listen('MessageUnsent', (e) => {
           let chat = this.chats.find(chat => chat.chat_id === e.message.chat_id)
@@ -317,13 +322,26 @@ export default {
     getChat(chat) {
       this.activeUser = this.chatUser(chat)
 
+      if (chat.unread_count > 0) {
+        this.$http.put(`/api/chats/${chat.chat_id}`)
+          .then((response) => {
+            this.messages = response.data
+
+            let message = response.data[response.data.length - 1]
+
+            message.unread_count = 0
+
+            this.$set(this.chats, this.findIndexForChat(message.chat_id), message)
+
+            this.setBadgeCount()
+          }) 
+
+          return
+      }
+
       this.$http.get(`/api/chats/${chat.chat_id}`)
         .then(response => {
           this.messages = response.data
-
-          this.readChat(chat)
-
-          this.$refs.content.focus()
         })
     },
 
@@ -331,14 +349,24 @@ export default {
      * Read the given chat.
      */
     readChat(chat) {
-      if (chat.unread_count > 0) {
-        this.$http.put(`/api/chats/${chat.chat_id}`)
-          .then(() => {
-            chat.unread_count = 0
+      this.$http.put(`/api/chats/${chat.chat_id}`)
+        .then((response) => {
+          response.data.forEach(message => {
+            this.handleMessageRead(message)
+          })
+        }) 
+    },
 
-            this.setBadgeCount()
-          }) 
+    handleMessageRead(message) {
+      if (this.chatIsActive(message)) {
+        this.$set(
+          this.messages, this.messages.findIndex(m => m.id === message.id), message
+        )
       }
+
+      message.unread_count = 0
+
+      this.$set(this.chats, this.findIndexForChat(message.chat_id), message)
     },
 
     updateChatsWithMessage(message) {
@@ -425,11 +453,11 @@ export default {
 
       this.$http.delete(`/api/chats/${chat.chat_id}`)
         .then(() => {
-          this.chats.splice(this.findIndexForChat(chat.chat_id), 1)
-
           if (this.chatIsActive(chat)) {
             this.activeUser = null
           }
+
+          this.chats.splice(this.findIndexForChat(chat.chat_id), 1)
 
           this.modal.show = false
         });
