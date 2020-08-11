@@ -131,7 +131,7 @@
 
                 <div class="p-1" v-if="message.files.length">
                   <a class="block cursor-pointer" :class="{ 'mt-1': message.files.indexOf(file) > 0 }" v-for="file in message.files" :key="file.id" @click="activeFile = file">
-                    <img class="rounded-md" style="width: 20rem;" :src="getFile(file)" @load="scrollToMessagesBottom">
+                    <img class="rounded-md" style="width: 20rem;" :src="fileUrl(file)" @load="scrollToMessagesBottom">
                   </a>
                 </div>
                 
@@ -175,7 +175,6 @@
 
 <script>
 import _ from 'lodash'
-import { remote } from 'electron'
 import Confirm from '../components/Confirm.vue'
 import File from '../components/File.vue'
 import NewChat from '../components/NewChat.vue'
@@ -194,15 +193,12 @@ export default {
       },
 
       errors: [],
-      chats: [],
-      messages: [],
       typings: [],
 
       userMenu: false,
       chatMenu: false,
       hoveredMessage: null,
       newChat: false,
-      activeUser: null,
       activeMessage: null,
       activeFile: null,
 
@@ -219,15 +215,39 @@ export default {
    * The component's computed properties.
    */
   computed: {
-    tokenId() {
-      return localStorage.getItem('token').split('|')[0]
+    groupedMessages() {
+      return _.groupBy(this.messages, (m) => this.date(m.created_at))
     },
 
-    groupedMessages() {
-      console.log(this.messages)
+    activeUser: {
+      get() {
+        return this.$bus.activeUser
+      },
 
-      return _.groupBy(this.messages, (m) => this.date(m.created_at))
-    }
+      set(value) {
+        this.$bus.activeUser = value
+      } 
+    },
+
+    chats: {
+      get() {
+        return this.$bus.chats
+      },
+
+      set(value) {
+        this.$bus.chats = value
+      } 
+    },
+
+    messages: {
+      get() {
+        return this.$bus.messages
+      },
+
+      set(value) {
+        this.$bus.messages = value
+      } 
+    },
   },
 
   /**
@@ -245,101 +265,10 @@ export default {
    * Mount the component.
    */
   mounted() {
-    this.getChats()
     this.listenForTypings()
-    this.listenForMessages()
   },
 
   methods: {
-    /**
-     * Get the chats.
-     */
-    getChats() {
-      this.$http.get('/api/chats')
-        .then(response => {
-          this.chats = response.data
-
-          this.setBadgeCount()
-        })
-    },
-
-    /**
-     * Listen for typings.
-    */
-    listenForTypings() {
-      this.$echo.private(`typing.${this.$bus.user.id}`)
-        .listenForWhisper('typing', (e) => {
-          if (! this.isTyping(e.user)) {
-            this.typings.push(e.user.id)
-          }
-
-          if (e.submit) {
-            this.typings.splice(this.typings.indexOf(e.user.id), 1)
-          
-            return
-          }
-
-          setTimeout(() => {
-            this.typings.splice(this.typings.indexOf(e.user.id), 1)
-          }, 3000)
-        })
-    },
-
-    /**
-     * Listen for messages.
-     */
-    listenForMessages() {
-      this.$echo.private(`App.User.${this.$bus.user.id}`)
-        .listen('MessageSent', (e) => {
-          if (this.activeUser && this.activeUser.id === e.message.sender_id) {
-            e.message.unread_count = 0
-
-            this.messages.push(e.message)
-
-            this.readChat(e.message)
-          } else {
-            let chat = this.chats.find(chat => chat.chat_id === e.message.chat_id)
-
-            e.message.unread_count = chat ? ++chat.unread_count : 1
-
-            this.notify(e.message)
-          }
-          
-          this.updateChatsWithMessage(e.message)
-
-          this.setBadgeCount()
-        })
-        .listen('MessageRead', (e) => {
-          this.handleMessageRead(e.message)
-        })
-        .listen('MessageUnsent', (e) => {
-          let chat = this.chats.find(chat => chat.chat_id === e.message.chat_id)
-
-          if (! e.message.read_at) {
-            chat.unread_count--
-          }
-
-          if (this.chatIsActive(e.message)) {
-            this.messages.splice(
-              this.messages.findIndex(message => message.id === e.message.id), 1
-            )
-          }
-
-          this.updateChatOnMessageUnsent(chat)
-        })
-        .listen('ChatDeleted', (e) => {
-          let chat = this.chats.find(
-            chat => [chat.sender_id, chat.receiver_id].includes(e.user.id)
-          )
-
-          if (this.chatIsActive(chat)) {
-            this.activeUser = null
-          }
-
-          this.chats.splice(this.findIndexForChat(chat.chat_id), 1)
-        })
-    },
-
     /**
      * Get the messages for the given chat.
      */
@@ -357,7 +286,7 @@ export default {
 
             this.$set(this.chats, this.findIndexForChat(message.chat_id), message)
 
-            this.setBadgeCount()
+            this.$bus.$emit('update-badge-count')
           }) 
 
           return
@@ -366,64 +295,6 @@ export default {
       this.$http.get(`/api/chats/${chat.chat_id}`)
         .then(response => {
           this.messages = response.data
-        })
-    },
-
-    /**
-     * Read the given chat.
-     */
-    readChat(chat) {
-      this.$http.put(`/api/chats/${chat.chat_id}`)
-        .then((response) => {
-          response.data.forEach(message => {
-            this.handleMessageRead(message)
-          })
-        }) 
-    },
-
-    handleMessageRead(message) {
-      if (this.chatIsActive(message)) {
-        this.$set(
-          this.messages, this.messages.findIndex(m => m.id === message.id), message
-        )
-      }
-
-      message.unread_count = 0
-
-      this.$set(this.chats, this.findIndexForChat(message.chat_id), message)
-    },
-
-    updateChatsWithMessage(message) {
-      let index = this.findIndexForChat(message.chat_id)
-
-      if (index === -1) {
-        this.chats.unshift(message)
-
-        return
-      }
-
-      this.$set(this.chats, index, message)
-      
-      this.chats.sort((a, b) => {
-        return a.id === message.id ? -1 : b === message.id ? 1 : 0;
-      });
-    },
-
-    /**
-     * Update the given chat when a message has been unsent.
-     */
-    updateChatOnMessageUnsent(chat) {
-      this.$http.get(`/api/chats/${chat.chat_id}`)
-        .then(response => {
-          if (response.data.length === 0) {
-            this.chats.splice(this.findIndexForChat(chat.chat_id), 1)
-          } else {
-            let message = response.data[response.data.length - 1]
-
-            message.unread_count = chat.unread_count
-
-            this.updateChatsWithMessage(message)
-          }
         })
     },
 
@@ -453,7 +324,20 @@ export default {
 
           this.messages.push(response.data)
 
-          this.updateChatsWithMessage(response.data)
+          // updateChatsWithMessage
+          let index = this.findIndexForChat(response.data.chat_id)
+
+          if (index === -1) {
+            this.chats.unshift(response.data)
+
+            return
+          }
+
+          this.$set(this.chats, index, response.data)
+          
+          this.chats.sort((a, b) => {
+            return a.id === response.data.id ? -1 : b === response.data.id ? 1 : 0;
+          });
         })
         .catch(error => {
           this.errors = this.formatErrors(error.response.data.errors)
@@ -508,10 +392,39 @@ export default {
     },
 
     /**
+     * Get the user from the chat.
+     */
+    chatUser(chat) {
+      return this.$bus.user.id === chat.sender.id ? chat.receiver : chat.sender
+    },
+
+    /**
+     * Listen for typings.
+    */
+    listenForTypings() {
+      this.$echo.private(`typing.${this.$bus.user.id}`)
+        .listenForWhisper('typing', (e) => {
+          if (! this.isTyping(e.user)) {
+            this.typings.push(e.user.id)
+          }
+
+          if (e.submit) {
+            this.typings.splice(this.typings.indexOf(e.user.id), 1)
+          
+            return
+          }
+
+          setTimeout(() => {
+            this.typings.splice(this.typings.indexOf(e.user.id), 1)
+          }, 3000)
+        })
+    },
+
+    /**
      * Log the user out of the application.
      */
     logout() {
-      this.$http.delete(`/api/tokens/${this.tokenId}`)
+      this.$http.delete(`/api/tokens/${this.tokenId()}`)
         .then(() => {
           this.handleAfterLogout()
         })
@@ -538,36 +451,17 @@ export default {
     },
 
     /**
-     * Get the user from the chat.
-     */
-    chatUser(chat) {
-      return this.$bus.user.id === chat.sender.id ? chat.receiver : chat.sender
-    },
-
-    /**
-     * Determine if the given chat is active.
-     */
-    chatIsActive(chat) {
-      if (! this.activeUser) {
-        return false
-      }
-
-      let ch = this.chats.find(
-        ch => [ch.sender_id, ch.receiver_id].includes(this.activeUser.id)
-      )
-
-      if (ch) {
-        return ch.chat_id === chat.chat_id
-      }
-
-      return false
-    },
-
-    /**
      * Determine if the given message is sent.
      */
     isSentMessage(message) {
       return this.$bus.user.id === message.sender_id
+    },
+
+    /**
+     * Determine if the given user is typing.
+     */
+    isTyping(user) {
+      return this.typings.includes(user.id)
     },
 
     /**
@@ -582,23 +476,6 @@ export default {
      */
     handleFiles() {
       this.form.files = Object.values(this.$refs.files.files)
-    },
-
-    /**
-     * Notify the user with the given message.
-     */
-    notify(message) {
-      new Notification(message.sender.name, {
-        body: message.content ?? '',
-        icon: this.picture(message.sender)
-      })
-    },
-
-    /**
-     * Determine if the given user is typing.
-     */
-    isTyping(user) {
-      return this.typings.includes(user.id)
     },
 
     /**
@@ -642,28 +519,24 @@ export default {
     },
 
     /**
-     * Set the badge count.  
+     * Get the token ID.
      */
-    setBadgeCount() {
-      remote.app.setBadgeCount(
-        this.chats.filter(chat => chat.unread_count > 0).length
-      )
+    tokenId() {
+      return localStorage.getItem('token').split('|')[0]
     },
 
     /**
      * Determine if the "read at" time should be shown.
      */
     showReadAt(message) {
-      const date = this.date(message.created_at)
+      let date = this.date(message.created_at)
+      let group = this.groupedMessages[date]
+      let index = Object.keys(this.groupedMessages).findIndex(d => d === date)
 
-      const index = Object.keys(this.groupedMessages).findIndex(d => d === date)
-
-      const group = this.groupedMessages[date]
-
-      return this.isSentMessage(message) &
-        index === Object.keys(this.groupedMessages).length - 1 & 
-        group.indexOf(message) === group.length - 1 &
-        !! message.read_at
+      return this.isSentMessage(message) &&
+        index === Object.keys(this.groupedMessages).length - 1 && 
+        group.indexOf(message) === group.length - 1 &&
+        message.read_at
     }
   }
 }

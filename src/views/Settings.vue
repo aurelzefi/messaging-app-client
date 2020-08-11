@@ -190,6 +190,9 @@ import Confirm from '../components/Confirm.vue'
 export default {
   components: { Confirm },
 
+  /**
+   * The component's data.
+   */
   data() {
     return {
       pictureForm: {
@@ -222,6 +225,9 @@ export default {
   },
 
   methods: {
+    /**
+     * Update the picture.
+     */
     updatePicture() {
       this.pictureForm.errors = {}
       this.pictureForm.success = false
@@ -240,6 +246,9 @@ export default {
         });
     },
     
+    /**
+     * Update the information.
+     */
     updateInformation() {
       this.informationForm.errors = {}
       this.informationForm.success = false
@@ -254,6 +263,9 @@ export default {
         });
     },
 
+    /**
+     * Update the password.
+     */
     updatePassword() {
       this.passwordForm.errors = {}
       this.passwordForm.success = false
@@ -272,6 +284,9 @@ export default {
         });
     },
 
+    /**
+     * Delete the account.
+     */
     deleteAccount() {
       this.$http.delete('/api/user')
         .then(() => {
@@ -279,6 +294,9 @@ export default {
         })
     },
 
+    /**
+     * Open the modal to delete the account.
+     */
     openDeleteAccountModal() {
       this.modal.show = true
       this.modal.title = 'Delete Account'
@@ -286,6 +304,9 @@ export default {
       this.modal.method = this.deleteAccount
     },
 
+    /**
+     * Open the file browser.
+     */
     openFileBrowser() {
       this.$refs.picture.click()
     },

@@ -42,6 +42,7 @@ function createWindow() {
   win.on('close', (e) => {
     e.preventDefault()
     win.hide()
+    win.webContents.send('window-open', false)
   })
 }
 
@@ -61,6 +62,7 @@ app.on('activate', () => {
     createWindow()
   } else {
     win.show()
+    win.webContents.send('window-open', true)
   }
 })
 

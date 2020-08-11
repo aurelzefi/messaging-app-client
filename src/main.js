@@ -17,7 +17,15 @@ if (localStorage.getItem('token')) {
 
 Vue.prototype.$http = axios.create({ baseURL: API_URL })
 
-Vue.prototype.$bus = new Vue()
+Vue.prototype.$bus = new Vue({
+  data: {
+    user: null,
+    windowOpen: true,
+    chats: [],
+    messages: [],
+    activeUser: null,
+  }
+})
 
 window.Pusher = Pusher
 
@@ -65,7 +73,10 @@ Vue.mixin({
       this.$echo.leave(`App.User.${this.$bus.user.id}`)
 
       this.$bus.user = null
-      
+      this.$bus.chats = []
+      this.$bus.messages = []
+      this.$bus.activeUser = null
+
       localStorage.removeItem('token')
       
       delete this.$http.defaults.headers.Authorization
@@ -74,7 +85,7 @@ Vue.mixin({
     },
 
     /** 
-     * Get the full URL for the given picture.
+     * Get the URL for the given user's picture.
     */
     picture(user) {
       if (user.picture) {
@@ -87,7 +98,7 @@ Vue.mixin({
     /**
      * Get the URL for the given file.
      */
-    getFile(file) {
+    fileUrl(file) {
       return `${API_URL}/api/files/${file.id}?api_token=${localStorage.getItem('token')}`
     },
 
@@ -117,7 +128,26 @@ Vue.mixin({
      */
     dateTime(timestamp) {
       return moment(timestamp).format('YYYY-MM-DD HH:mm')
-    }
+    },
+
+    /**
+     * Determine if the given chat is active.
+     */
+    chatIsActive(chat) {
+      if (! this.activeUser) {
+        return false
+      }
+
+      let ch = this.chats.find(
+        ch => [ch.sender_id, ch.receiver_id].includes(this.activeUser.id)
+      )
+
+      if (ch) {
+        return ch.chat_id === chat.chat_id
+      }
+
+      return false
+    },
   }
 })
 

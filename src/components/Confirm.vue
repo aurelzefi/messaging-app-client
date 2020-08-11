@@ -15,14 +15,11 @@
 <script>
 export default {
   props: ['data', 'hide'],
-
-  data() {
-    return {
-      //
-    }
-  },
   
   methods: {
+    /**
+     * Confirm the method.
+     */
     confirm() {
       this.data.method()
     }

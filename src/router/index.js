@@ -15,12 +15,6 @@ const routes = [
     meta: { requiresAuth: false }
   },
   {
-    path: '/home',
-    name: 'home',
-    component: Home,
-    meta: { requiresAuth: true }
-  },
-  {
     path: '/register',
     name: 'register',
     component: Register,
@@ -31,6 +25,12 @@ const routes = [
     name: 'login',
     component: Login,
     meta: { requiresAuth: false }
+  },
+  {
+    path: '/home',
+    name: 'home',
+    component: Home,
+    meta: { requiresAuth: true }
   },
   {
     path: '/users/:id',
@@ -62,6 +62,7 @@ router.beforeEach((to, from, next) => {
         Vue.prototype.$http.get('/api/user')
           .then(response => {
             Vue.prototype.$bus.user = response.data
+            Vue.prototype.$bus.$emit('user-set', response.data)
 
             next()
           })

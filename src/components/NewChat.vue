@@ -58,7 +58,7 @@ export default {
     },
 
     /**
-     * Start the new chat.
+     * Start a new chat.
      */
     startChat(user) {
       this.method(user)
