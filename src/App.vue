@@ -3,6 +3,7 @@
 </template>
 
 <script>
+import path from 'path'
 import { remote, ipcRenderer } from 'electron'
 
 export default {
@@ -15,6 +16,9 @@ export default {
     }
   },
 
+  /**
+   * The component's computed properties.
+   */
   computed: {
     user() {
       return this.$bus.user
@@ -201,7 +205,7 @@ export default {
      */
     notify(message) {
       new Notification(message.sender.name, {
-        body: message.content ?? '',
+        body: `${message.files.length ? '[Image] ' : ''}${message.content ?? ''}`,
         icon: this.picture(message.sender)
       })
     },

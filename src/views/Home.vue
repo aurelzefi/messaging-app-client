@@ -318,7 +318,6 @@ export default {
       this.$http.post(`/api/messages`, formData)
         .then(response => {
           this.form.content = ''
-          this.form.files = []
 
           response.data.unread_count = 0
 
