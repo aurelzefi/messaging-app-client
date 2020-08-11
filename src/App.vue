@@ -3,7 +3,6 @@
 </template>
 
 <script>
-import path from 'path'
 import { remote, ipcRenderer } from 'electron'
 
 export default {
