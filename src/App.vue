@@ -57,7 +57,7 @@ export default {
       this.listenForMessages()
     })
 
-    this.$bus.$on('update-badge-count', () => {
+    this.$bus.$on('chats-updated', () => {
       this.updateBadgeCount()
     })
 

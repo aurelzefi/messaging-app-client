@@ -112,16 +112,18 @@
     <div ref="messages" class="w-2/3 mt-16 overflow-auto" style="height: calc(100vh - 8rem)" v-if="activeUser">
       <div class="p-3" v-if="Object.keys(groupedMessages).length">
         <div :class=" { 'mt-3': index > 0 }" v-for="(messages, date, index) in groupedMessages" :key="date">
-          <div class="text-sm text-center text-gray-700">{{ date }}</div>
+          <div class="text-center">
+            <span class="px-2 py-1 text-sm bg-gray-200 rounded-md shadow">{{ date }}</span>
+          </div>
 
           <ul class="mt-3">
             <li class="w-7/12 flex flex-col" :class="{ 'ml-auto justify-end items-end': isSentMessage(message), 'items-start': ! isSentMessage(message), 'mt-3': messages.indexOf(message) > 0 }" v-for="message in messages" :key="message.id">
-              <div class="relative bg-gray-200 rounded-md shadow-sm" :style="[ message.files.length ? { width: '20rem' } : ''  ]" @mouseover="hoveredMessage = message" @mouseleave="hoveredMessage = null">
-                <button class="absolute top-0 right-0 m-2 focus:outline-none" type="button" v-if="isSentMessage(message) && (hoveredMessage === message || activeMessage === message)" @click="activeMessage = message">
+              <div class="relative bg-gray-200 rounded-md shadow" :style="[ message.files.length ? { width: '20rem' } : ''  ]" @mouseover="hoveredMessage = message" @mouseleave="hoveredMessage = null">
+                <button class="absolute right-0 p-1 mr-1 mt-1 focus:outline-none" type="button" v-if="isSentMessage(message) && (isHovered(message) || isActive(message))" @click="activeMessage = message">
                   <svg class="h-4 w-4 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
                 </button>
-                <button class="fixed inset-0 h-full w-full cursor-default focus:outline-none z-10" tabindex="-1" v-if="activeMessage === message" @click="activeMessage = null"></button>
-                <div class="w-48 absolute bg-white right-0 mt-6 mr-1 border rounded-md border-gray-200 shadow-md z-20" v-if="activeMessage === message">
+                <button class="fixed inset-0 h-full w-full cursor-default focus:outline-none z-10" tabindex="-1" v-if="isActive(message)" @click="activeMessage = null"></button>
+                <div class="w-48 absolute bg-white right-0 mt-6 mr-2 border rounded-md border-gray-200 shadow-md z-20" v-if="isActive(message)">
                   <ul class="py-2 text-sm text-gray-700">
                     <li>
                       <a class="block px-3 py-2 hover:bg-gray-200 cursor-pointer" @click="openDeleteMessageModal">Delete</a>
@@ -286,7 +288,7 @@ export default {
 
             this.$set(this.chats, this.findIndexForChat(message.chat_id), message)
 
-            this.$bus.$emit('update-badge-count')
+            this.$bus.$emit('chats-updated')
           }) 
 
           return
@@ -481,11 +483,11 @@ export default {
      * Start a new chat with the given user.
      */
     startChat(user) {
+      this.newChat = false
+
       let chat = this.chats.find(
         chat => [chat.sender_id, chat.receiver_id].includes(user.id)
       )
-
-      this.newChat = false
 
       if (chat) {
         this.getChat(chat)
@@ -493,8 +495,8 @@ export default {
         return
       }
 
-      this.activeUser = user
       this.messages = []
+      this.activeUser = user
     },
 
     /**
@@ -522,6 +524,14 @@ export default {
      */
     tokenId() {
       return localStorage.getItem('token').split('|')[0]
+    },
+
+    isHovered(message) {
+      return this.hoveredMessage === message
+    },
+
+    isActive(message) {
+      return this.activeMessage === message
     },
 
     /**
