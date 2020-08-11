@@ -280,7 +280,7 @@ export default {
           this.passwordForm.new_password_confirmation = ''
         })
         .catch((error) => {
-          this.passwordForm.errors = this.formatErrors(error.response.data.errors);
+          this.passwordForm.errors = this.formatErrors(error.response.data.errors)
         });
     },
 

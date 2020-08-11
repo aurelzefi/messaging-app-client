@@ -34,6 +34,9 @@
 import os from 'os'
 
 export default {
+  /**
+   * The component's data.
+   */
   data() {
     return {
       form: {

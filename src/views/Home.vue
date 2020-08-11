@@ -119,11 +119,11 @@
           <ul class="mt-3">
             <li class="w-7/12 flex flex-col" :class="{ 'ml-auto justify-end items-end': isSentMessage(message), 'items-start': ! isSentMessage(message), 'mt-3': messages.indexOf(message) > 0 }" v-for="message in messages" :key="message.id">
               <div class="relative bg-gray-200 rounded-md shadow" :style="[ message.files.length ? { width: '20rem' } : ''  ]" @mouseover="hoveredMessage = message" @mouseleave="hoveredMessage = null">
-                <button class="absolute right-0 p-1 mr-1 mt-1 focus:outline-none" type="button" v-if="isSentMessage(message) && (isHovered(message) || isActive(message))" @click="activeMessage = message">
+                <button class="absolute right-0 p-1 mr-1 mt-1 focus:outline-none" type="button" v-if="showMenuForMessage(message)" @click="activeMessage = message">
                   <svg class="h-4 w-4 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
                 </button>
                 <button class="fixed inset-0 h-full w-full cursor-default focus:outline-none z-10" tabindex="-1" v-if="isActive(message)" @click="activeMessage = null"></button>
-                <div class="w-48 absolute bg-white right-0 mt-6 mr-2 border rounded-md border-gray-200 shadow-md z-20" v-if="isActive(message)">
+                <div class="w-48 absolute bg-white right-0 mt-6 mr-1 border rounded-md border-gray-200 shadow-md z-20" v-if="isActive(message)">
                   <ul class="py-2 text-sm text-gray-700">
                     <li>
                       <a class="block px-3 py-2 hover:bg-gray-200 cursor-pointer" @click="openDeleteMessageModal">Delete</a>
@@ -133,7 +133,7 @@
 
                 <div class="p-1" v-if="message.files.length">
                   <a class="block cursor-pointer" :class="{ 'mt-1': message.files.indexOf(file) > 0 }" v-for="file in message.files" :key="file.id" @click="activeFile = file">
-                    <img class="rounded-md" style="width: 20rem;" :src="fileUrl(file)" @load="scrollToMessagesBottom">
+                    <img class="rounded-md overflow-hidden" style="width: 20rem;" :src="fileUrl(file)" @load="scrollToMessagesBottom">
                   </a>
                 </div>
                 
@@ -526,10 +526,20 @@ export default {
       return localStorage.getItem('token').split('|')[0]
     },
 
+    /**
+     * Determine if the given message is hovered.
+     */
     isHovered(message) {
       return this.hoveredMessage === message
     },
 
+    showMenuForMessage(message) {
+      return this.isSentMessage(message) && (this.isHovered(message) || this.isActive(message))
+    },
+
+    /**
+     * Determine if the given message is active.
+     */
     isActive(message) {
       return this.activeMessage === message
     },
