@@ -1,8 +1,10 @@
 <template>
   <div class="flex h-screen antialiased">
     <file v-if="activeFile" :file="activeFile" :hide="() => activeFile = null"></file>
+    <file-preview v-if="form.files.length" :files="form.files" :hide="clearFiles"></file-preview>
     <new-chat v-if="newChat" :method="startChat" :hide="() => newChat = false"></new-chat>
     <confirm v-if="modal.show" :data="modal" :hide="() => modal.show = false"></confirm>
+    <errors v-if="Object.keys(errors).length" :errors="errors" :hide="() => errors = {}"></errors>
 
     <div class="w-full h-16 fixed flex z-10">
       <div class="w-1/3 flex justify-end bg-gray-100 p-2 border-b border-r border-gray-200">
@@ -119,7 +121,7 @@
           <ul class="mt-3">
             <li class="w-7/12 flex flex-col" :class="{ 'ml-auto justify-end items-end': isSentMessage(message), 'items-start': ! isSentMessage(message), 'mt-3': messages.indexOf(message) > 0 }" v-for="message in messages" :key="message.id">
               <div class="relative bg-gray-200 rounded-md shadow" :style="[ message.files.length ? { width: '20rem' } : ''  ]" @mouseover="hoveredMessage = message" @mouseleave="hoveredMessage = null">
-                <button class="absolute right-0 p-1 mr-1 mt-1 focus:outline-none" type="button" v-if="showMenuForMessage(message)" @click="activeMessage = message">
+                <button class="absolute right-0 p-1 mr-1 mt-1 focus:outline-none" type="button" v-if="shouldHaveMenu(message)" @click="activeMessage = message">
                   <svg class="h-4 w-4 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
                 </button>
                 <button class="fixed inset-0 h-full w-full cursor-default focus:outline-none z-10" tabindex="-1" v-if="isActive(message)" @click="activeMessage = null"></button>
@@ -132,8 +134,8 @@
                 </div>
 
                 <div class="p-1" v-if="message.files.length">
-                  <a class="block cursor-pointer" :class="{ 'mt-1': message.files.indexOf(file) > 0 }" v-for="file in message.files" :key="file.id" @click="activeFile = file">
-                    <img class="rounded-md overflow-hidden" style="width: 20rem;" :src="fileUrl(file)" @load="scrollToMessagesBottom">
+                  <a class="block cursor-pointer text-center" :class="{ 'mt-1': message.files.indexOf(file) > 0 }" v-for="file in message.files" :key="file.id" @click="activeFile = file">
+                    <img class="inline rounded-md max-w-full" :src="fileUrl(file)" @load="scrollToMessagesBottom">
                   </a>
                 </div>
                 
@@ -178,11 +180,13 @@
 <script>
 import _ from 'lodash'
 import Confirm from '../components/Confirm.vue'
+import Errors from  '../components/Errors.vue'
 import File from '../components/File.vue'
+import FilePreview from '../components/FilePreview.vue'
 import NewChat from '../components/NewChat.vue'
 
 export default {
-  components: { Confirm, File, NewChat },
+  components: { Confirm, Errors, File, FilePreview, NewChat },
 
   /**
    * The component's data.
@@ -194,7 +198,7 @@ export default {
         files: []
       },
 
-      errors: [],
+      errors: {},
       typings: [],
 
       userMenu: false,
@@ -268,6 +272,16 @@ export default {
    */
   mounted() {
     this.listenForTypings()
+
+    this.$bus.$on('whisper', (e) => {
+      this.whisper(e)
+    })
+
+    this.$bus.$on('message-sent', (e) => {
+      this.form.content = e.content
+
+      this.sendMessage()
+    })
   },
 
   methods: {
@@ -304,6 +318,8 @@ export default {
      * Send a message.
      */
     sendMessage() {
+      this.errors = {}
+
       if (this.form.content.length === 0 && this.form.files.length === 0) {
         return
       }
@@ -320,6 +336,7 @@ export default {
       this.$http.post(`/api/messages`, formData)
         .then(response => {
           this.form.content = ''
+          this.clearFiles()
 
           response.data.unread_count = 0
 
@@ -337,11 +354,13 @@ export default {
           this.$set(this.chats, index, response.data)
           
           this.chats.sort((a, b) => {
-            return a.id === response.data.id ? -1 : b === response.data.id ? 1 : 0;
-          });
+            return a.id === response.data.id ? -1 : b === response.data.id ? 1 : 0
+          })
         })
         .catch(error => {
           this.errors = this.formatErrors(error.response.data.errors)
+          
+          this.clearFiles()
         })
     },
 
@@ -369,7 +388,7 @@ export default {
           this.chats.splice(this.findIndexForChat(chat.chat_id), 1)
 
           this.modal.show = false
-        });
+        })
     },
 
     /**
@@ -432,6 +451,13 @@ export default {
     },
 
     /**
+     * Get the token ID.
+     */
+    tokenId() {
+      return localStorage.getItem('token').split('|')[0]
+    },
+
+    /**
      * Send a whisper that the user is typing.
      */
     whisper(e) {
@@ -470,6 +496,12 @@ export default {
      */
     openFileBrowser() {
       this.$refs.files.click()
+    },
+
+    clearFiles() {
+      this.form.files = []
+      
+      this.$refs.files.value = ''
     },
 
     /**
@@ -520,10 +552,10 @@ export default {
     },
 
     /**
-     * Get the token ID.
+     * Determine if the given message should have a menu shown.
      */
-    tokenId() {
-      return localStorage.getItem('token').split('|')[0]
+    shouldHaveMenu(message) {
+      return this.isSentMessage(message) && (this.isHovered(message) || this.isActive(message))
     },
 
     /**
@@ -531,10 +563,6 @@ export default {
      */
     isHovered(message) {
       return this.hoveredMessage === message
-    },
-
-    showMenuForMessage(message) {
-      return this.isSentMessage(message) && (this.isHovered(message) || this.isActive(message))
     },
 
     /**

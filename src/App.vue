@@ -176,8 +176,8 @@ export default {
       this.$set(this.chats, index, message)
       
       this.chats.sort((a, b) => {
-        return a.id === message.id ? -1 : b === message.id ? 1 : 0;
-      });
+        return a.id === message.id ? -1 : b === message.id ? 1 : 0
+      })
     },
 
     handleMessageRead(message) {

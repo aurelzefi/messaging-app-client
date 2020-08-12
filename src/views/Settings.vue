@@ -172,7 +172,7 @@
       </div>
 
       <div class="p-3 text-sm">
-        <div class="p-4 bg-orange-200 text-orange-800 rounded">
+        <div class="p-4 bg-orange-200 text-orange-800 rounded-md">
           This action will delete all your data and is not reversible.
         </div>
 
