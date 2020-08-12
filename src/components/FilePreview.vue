@@ -65,7 +65,7 @@ export default {
     },
 
     /**
-     * Emit the event when message sent.
+     * Emit the event on message sent.
      */
     send() {
       this.$bus.$emit('message-sent', {

@@ -163,7 +163,10 @@ export default {
           })
         }) 
     },
-
+   
+    /**
+     * Update chats with the given message.
+     */
     updateChatsWithMessage(message) {
       let index = this.chats.findIndex(chat => chat.chat_id === message.chat_id)
 
@@ -180,6 +183,9 @@ export default {
       })
     },
 
+  /**
+   * Handle the message event.
+   */
     handleMessageRead(message) {
       if (this.chatIsActive(message)) {
         this.$set(

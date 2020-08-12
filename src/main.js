@@ -18,10 +18,9 @@ Vue.prototype.$http = axios.create({ baseURL: API_URL })
 Vue.prototype.$bus = new Vue({
   data: {
     user: null,
-    windowOpen: true,
     chats: [],
     messages: [],
-    activeUser: null,
+    activeUser: null
   }
 })
 
@@ -47,6 +46,12 @@ Vue.mixin(mixin)
 Vue.directive('focus', {
   inserted: function (el) {
     el.focus()
+  }
+})
+
+Vue.directive('message-inserted', {
+  inserted: function (el, method) {
+    method.value()
   }
 })
 

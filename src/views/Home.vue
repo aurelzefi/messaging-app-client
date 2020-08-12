@@ -119,7 +119,7 @@
           </div>
 
           <ul class="mt-3">
-            <li class="w-7/12 flex flex-col" :class="{ 'ml-auto justify-end items-end': isSentMessage(message), 'items-start': ! isSentMessage(message), 'mt-3': messages.indexOf(message) > 0 }" v-for="message in messages" :key="message.id">
+            <li ref="message" class="w-7/12 flex flex-col" :class="{ 'ml-auto justify-end items-end': isSentMessage(message), 'items-start': ! isSentMessage(message), 'mt-3': messages.indexOf(message) > 0 }" v-for="message in messages" :key="message.id" v-message-inserted="scrollToMessagesBottom">
               <div class="relative bg-gray-200 rounded-md shadow" :style="[ message.files.length ? { width: '20rem' } : ''  ]" @mouseover="hoveredMessage = message" @mouseleave="hoveredMessage = null">
                 <button class="absolute right-0 p-1 mr-1 mt-1 focus:outline-none" :class="{ 'bg-gray-200': message.files.length === 0 }" type="button" v-if="shouldHaveMenu(message)" @click="activeMessage = message">
                   <svg class="h-4 w-4" :class="[ message.files.length > 0 ? 'text-white' : 'text-gray-700' ]" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
@@ -253,17 +253,6 @@ export default {
       set(value) {
         this.$bus.messages = value
       } 
-    },
-  },
-
-  /**
-   * The properties to be watched.
-   */
-  watch: {
-    messages() {
-      setTimeout(() => {
-        this.scrollToMessagesBottom()
-      }, 1)
     }
   },
 
@@ -290,6 +279,7 @@ export default {
      */
     getChat(chat) {
       this.activeUser = this.chatUser(chat)
+      this.hasActiveChat = true
 
       if (chat.unread_count > 0) {
         this.$http.put(`/api/chats/${chat.chat_id}`)
