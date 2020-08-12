@@ -184,7 +184,7 @@ export default {
     },
 
   /**
-   * Handle the message event.
+   * Handle the message read event.
    */
     handleMessageRead(message) {
       if (this.chatIsActive(message)) {
