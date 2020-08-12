@@ -1,4 +1,4 @@
-# electron-vue-app
+# electron-messaging-client
 
 ## Project setup
 ```
