@@ -11,7 +11,7 @@ export default {
    */
   data() {
     return {
-      windowOpen: true
+      windowIsOpen: true
     }
   },
 
@@ -23,8 +23,14 @@ export default {
       return this.$bus.user
     },
 
-    activeUser() {
-      return this.$bus.activeUser
+    activeUser: {
+      get() {
+        return this.$bus.activeUser
+      },
+
+      set(value) {
+        this.$bus.activeUser = value
+      }
     },
 
     chats: {
@@ -61,8 +67,12 @@ export default {
       this.updateBadgeCount()
     })
 
+    this.$bus.$on('message-sent', (message) => {
+      this.updateChatsWithMessage(message)
+    })
+
     ipcRenderer.on('window-open', (e, data) => {
-      this.windowOpen = data
+      this.windowIsOpen = data
     })
   },
 
@@ -85,14 +95,12 @@ export default {
     listenForMessages() {
       this.$echo.private(`App.User.${this.user.id}`)
         .listen('MessageSent', (e) => {
-          if (this.activeUser && this.activeUser.id === e.message.sender_id && this.windowOpen && this.isHome()) {
-            e.message.unread_count = 0
-
+          if (this.activeUser && this.activeUser.id === e.message.sender_id && this.windowIsOpen && this.isHome()) {
             this.messages.push(e.message)
 
-            this.readChat(e.message)
+            this.readMessage(e.message)
           } else {
-            let chat = this.chats.find(chat => chat.chat_id === e.message.chat_id)
+            let chat = this.findChatForId(e.message.chat_id)
 
             e.message.unread_count = chat ? ++chat.unread_count : 1
 
@@ -107,19 +115,7 @@ export default {
           this.handleMessageRead(e.message)
         })
         .listen('MessageUnsent', (e) => {
-          let chat = this.chats.find(chat => chat.chat_id === e.message.chat_id)
-
-          if (! e.message.read_at) {
-            chat.unread_count--
-          }
-
-          if (this.chatIsActive(e.message)) {
-            this.messages.splice(
-              this.messages.findIndex(message => message.id === e.message.id), 1
-            )
-          }
-
-          this.updateChatOnMessageUnsent(chat)
+          this.handleMessageUnsent(e.message)
         })
         .listen('ChatDeleted', (e) => {
           let chat = this.chats.find(
@@ -135,35 +131,64 @@ export default {
     },
 
     /**
-     * Update the given chat when a message has been unsent.
+     * Read the given message.
      */
-    updateChatOnMessageUnsent(chat) {
-      this.$http.get(`/api/chats/${chat.chat_id}`)
+    readMessage(message) {
+      this.$http.put(`/api/chats/${message.chat_id}`)
         .then(response => {
-          if (response.data.length === 0) {
-            this.chats.splice(this.chats.findIndex(ch => ch.chat_id === chat.chat_id), 1)
-          } else {
-            let message = response.data[response.data.length - 1]
+          this.handleMessageRead(
+            response.data.find(m => m.id === message.id)
+          )
+        }) 
+    },
+
+    /**
+     * Handle the message read event.
+     */
+    handleMessageRead(message) {
+      if (this.chatIsActive(message)) {
+        this.$set(
+          this.messages, this.messages.findIndex(m => m.id === message.id), message
+        )
+      }
+
+      message.unread_count = 0
+
+      this.$set(this.chats, this.chats.findIndex(ch => ch.chat_id === message.chat_id), message)
+    },
+
+    /**
+     * Handle the message unsent event.
+     */
+    handleMessageUnsent(message) {
+      this.$http.get(`/api/chats/${message.chat_id}`)
+        .then(response => {
+          if (this.chatIsActive(message)) {
+            this.messages.splice(
+              this.messages.findIndex(m => m.id === message.id), 1
+            )
+          }
+          
+          let chat = this.chats.find(chat => chat.chat_id === message.chat_id)
+
+          if (! message.read_at) {
+            chat.unread_count--
+          }
+
+          if (response.data.length > 0) {
+            let message = response.data.pop()
 
             message.unread_count = chat.unread_count
 
             this.updateChatsWithMessage(message)
+
+            return
           }
+
+          this.chats.splice(this.chats.findIndex(ch => ch.chat_id === chat.chat_id), 1)
         })
     },
 
-    /**
-     * Read the given chat.
-     */
-    readChat(chat) {
-      this.$http.put(`/api/chats/${chat.chat_id}`)
-        .then((response) => {
-          response.data.forEach(message => {
-            this.handleMessageRead(message)
-          })
-        }) 
-    },
-   
     /**
      * Update chats with the given message.
      */
@@ -183,19 +208,11 @@ export default {
       })
     },
 
-  /**
-   * Handle the message read event.
-   */
-    handleMessageRead(message) {
-      if (this.chatIsActive(message)) {
-        this.$set(
-          this.messages, this.messages.findIndex(m => m.id === message.id), message
-        )
-      }
-
-      message.unread_count = 0
-
-      this.$set(this.chats, this.chats.findIndex(ch => ch.chat_id === message.chat_id), message)
+    /**
+     * Find the chat for the given ID.
+     */
+    findChatForId(chatId) {
+      return this.chats.find(chat => chat.chat_id === chatId)
     },
 
     /**

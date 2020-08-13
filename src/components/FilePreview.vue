@@ -65,10 +65,10 @@ export default {
     },
 
     /**
-     * Emit the event on message sent.
+     * Emit the event on preview done.
      */
     send() {
-      this.$bus.$emit('message-sent', {
+      this.$bus.$emit('preview-done', {
         content: this.form.content
       })
     }

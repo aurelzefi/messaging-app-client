@@ -119,7 +119,7 @@
           </div>
 
           <ul class="mt-3">
-            <li ref="message" class="w-7/12 flex flex-col" :class="{ 'ml-auto justify-end items-end': isSentMessage(message), 'items-start': ! isSentMessage(message), 'mt-3': messages.indexOf(message) > 0 }" v-for="message in messages" :key="message.id" v-message-inserted="scrollToMessagesBottom">
+            <li ref="message" class="w-7/12 flex flex-col" :class="{ 'ml-auto justify-end items-end': isSentMessage(message), 'items-start': ! isSentMessage(message), 'mt-3': messages.indexOf(message) > 0 }" v-for="message in messages" :key="message.id">
               <div class="relative bg-gray-200 rounded-md shadow" :style="[ message.files.length ? { width: '20rem' } : '' ]" @mouseover="hoveredMessage = message" @mouseleave="hoveredMessage = null">
                 <button class="absolute right-0 p-1 mr-1 mt-1 focus:outline-none" :class="{ 'bg-gray-200': message.files.length === 0 }" type="button" v-if="shouldShowMenu(message)" @click="activeMessage = message">
                   <svg class="h-4 w-4" :class="[ message.files.length > 0 ? 'text-white' : 'text-gray-700' ]" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
@@ -140,7 +140,7 @@
                 </div>
                 
                 <div class="flex flex-col px-2 py-1">
-                  <span class="text-sm" v-if="message.content">
+                  <span class="text-sm" v-if="message.content" v-message-inserted="scrollToMessagesBottom">
                     {{ message.content }}
                   </span>
 
@@ -150,7 +150,7 @@
                 </div>
               </div>
 
-              <span class="self-end mt-1 text-xs text-gray-700" v-if="isSentAndRead(message)">
+              <span class="self-end mt-1 text-xs text-gray-700" v-message-inserted="scrollToMessagesBottom" v-if="isSentAndRead(message)">
                 Read at {{ time(message.read_at) }}
               </span>
             </li>
@@ -178,6 +178,7 @@
 </template>
 
 <script>
+import { ipcRenderer } from 'electron'
 import _ from 'lodash'
 import Confirm from '../components/Confirm.vue'
 import Errors from  '../components/Errors.vue'
@@ -266,10 +267,20 @@ export default {
       this.whisper(e)
     })
 
-    this.$bus.$on('message-sent', (e) => {
+    this.$bus.$on('preview-done', (e) => {
       this.form.content = e.content
 
       this.sendMessage()
+    })
+
+    ipcRenderer.on('window-open', (e, data) => {
+      if (data === true && this.activeUser) {
+        let chat = this.chats.find(
+          chat => [chat.sender_id, chat.receiver_id].includes(this.activeUser.id)
+        )
+
+        this.getChat(chat)
+      }
     })
   },
 
@@ -331,20 +342,7 @@ export default {
 
           this.messages.push(response.data)
 
-          // updateChatsWithMessage
-          let index = this.findIndexForChat(response.data.chat_id)
-
-          if (index === -1) {
-            this.chats.unshift(response.data)
-
-            return
-          }
-
-          this.$set(this.chats, index, response.data)
-          
-          this.chats.sort((a, b) => {
-            return a.id === response.data.id ? -1 : b === response.data.id ? 1 : 0
-          })
+          this.$bus.$emit('message-sent', response.data)
         })
         .catch(error => {
           this.errors = this.formatErrors(error.response.data.errors)
@@ -368,15 +366,24 @@ export default {
         chat => [chat.sender_id, chat.receiver_id].includes(this.activeUser.id)
       )
 
+      this.chatMenu = false
+
+      if (! chat) {
+        this.activeUser = null
+        this.modal.show = false
+
+        return
+      }
+
       this.$http.delete(`/api/chats/${chat.chat_id}`)
         .then(() => {
+          this.modal.show = false
+
           if (this.chatIsActive(chat)) {
             this.activeUser = null
           }
 
           this.chats.splice(this.findIndexForChat(chat.chat_id), 1)
-
-          this.modal.show = false
         })
     },
 
@@ -386,17 +393,19 @@ export default {
     deleteMessage() {
       this.$http.delete(`/api/messages/${this.activeMessage.id}`)
         .then(() => {
+          this.modal.show = false
+
           this.messages.splice(this.messages.indexOf(this.activeMessage),  1)
 
           let index = this.findIndexForChat(this.activeMessage.chat_id)
 
-          if (this.messages.length === 0) {
-            this.chats.splice(index, 1)
-          } else {
+          if (this.messages.length > 0) {
             this.$set(this.chats, index, this.messages[this.messages.length - 1])
+          
+            return
           }
 
-          this.modal.show = false
+          this.chats.splice(index, 1)      
         })
     },
 
@@ -487,6 +496,9 @@ export default {
       this.$refs.files.click()
     },
 
+    /**
+     * Clear the form files.
+     */
     clearFiles() {
       this.form.files = []
       
