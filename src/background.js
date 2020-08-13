@@ -1,6 +1,6 @@
 'use strict'
 
-import { app, protocol, BrowserWindow } from 'electron'
+import { app, protocol, BrowserWindow, ipcMain } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 import path from 'path'
@@ -101,3 +101,7 @@ if (isDevelopment) {
     })
   }
 }
+
+ipcMain.on('badge-count-updated', (e, count) => {
+  app.setBadgeCount(count)
+})

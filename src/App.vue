@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import { remote, ipcRenderer } from 'electron'
+import { ipcRenderer } from 'electron'
 
 export default {
   /**
@@ -219,8 +219,8 @@ export default {
      * Update the badge count.
      */
     updateBadgeCount() {
-      remote.app.setBadgeCount(
-        this.chats.filter(chat => chat.unread_count > 0).length
+      ipcRenderer.send(
+        'badge-count-updated', this.chats.filter(chat => chat.unread_count > 0).length
       )
     }
   }
