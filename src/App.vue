@@ -146,12 +146,12 @@ export default {
      */
     handleMessageRead(message) {
       if (this.chatIsActive(message)) {
-        this.$set(this.messages, this.messages.findIndex(m => m.id === message.id), message)
+        this.updateMessage(message)
       }
 
       message.unread_count = 0
 
-      this.$set(this.chats, this.findIndexForChat(message.chat_id), message)
+      this.updateChat(message)
     },
 
     /**
@@ -161,7 +161,7 @@ export default {
       this.$http.get(`/api/chats/${message.chat_id}`)
         .then(response => {
           if (this.chatIsActive(message)) {
-            this.messages.splice(this.messages.findIndex(m => m.id === message.id), 1)
+            this.removeMessage(message)
           }
           
           let chat = this.findChatForId(message.chat_id)
@@ -180,7 +180,7 @@ export default {
             return
           }
 
-          this.chats.splice(this.findIndexForChat(chat.chat_id), 1)
+          this.removeChat(chat)
         })
     },
 
@@ -188,7 +188,7 @@ export default {
      * Update chats with the given message.
      */
     updateChatsWithMessage(message) {
-      let index = this.findIndexForChat(message.chat_id)
+      let index = this.chats.findIndex(chat => chat.chat_id === message.chat_id)
 
       if (index === -1) {
         this.chats.unshift(message)
@@ -196,7 +196,7 @@ export default {
         return
       }
 
-      this.$set(this.chats, index, message)
+      this.updateChat(message)
       
       this.chats.sort((a, b) => {
         return a.id === message.id ? -1 : b === message.id ? 1 : 0
@@ -215,7 +215,7 @@ export default {
         this.activeUser = null
       }
 
-      this.chats.splice(this.findIndexForChat(chat.chat_id), 1)
+      this.removeChat(chat)
 
       this.updateBadgeCount()
     },

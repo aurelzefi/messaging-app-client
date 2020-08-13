@@ -112,13 +112,6 @@ export default {
     },
 
     /**
-     * Find the index for the given chat.
-     */
-    findIndexForChat(chatId) {
-      return this.chats.findIndex(chat => chat.chat_id === chatId)
-    },
-
-    /**
      * Determine if the given chat is active.
      */
     chatIsActive(chat) {
@@ -134,5 +127,39 @@ export default {
       
       return false
     },
+
+    /**
+     * Update the chat for the given message.
+     */
+    updateChat(message) {
+      this.$set(
+        this.chats, this.chats.findIndex(chat => chat.chat_id === message.chat_id), message
+      )
+    }, 
+
+    /**
+     * Remove the chat for the given message.
+     */
+    removeChat(message) {
+      this.chats.splice(
+        this.chats.findIndex(chat => chat.chat_id === message.chat_id), 1
+      )
+    },
+
+    /**
+     * Update the given message.
+     */
+    updateMessage(message) {
+      this.$set(this.messages, this.messages.findIndex(m => m.id === message.id), message)
+    },
+
+    /**
+     * Remove the given message.
+     */
+    removeMessage(message) {
+      this.messages.splice(
+        this.messages.findIndex(m => m.id === message.id), 1
+      )
+    }
   }
 }

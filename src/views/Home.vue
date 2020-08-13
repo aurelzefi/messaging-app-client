@@ -298,7 +298,7 @@ export default {
 
             message.unread_count = 0
 
-            this.$set(this.chats, this.findIndexForChat(message.chat_id), message)
+            this.updateChat(message)
 
             this.$bus.$emit('chats-updated')
           }) 
@@ -372,7 +372,7 @@ export default {
             this.activeUser = null
           }
 
-          this.chats.splice(this.findIndexForChat(chat.chat_id), 1)
+          this.removeChat(chat)
         })
     },
 
@@ -384,17 +384,15 @@ export default {
         .then(() => {
           this.modal.show = false
 
-          this.messages.splice(this.messages.indexOf(this.activeMessage),  1)
-
-          let index = this.findIndexForChat(this.activeMessage.chat_id)
+          this.removeMessage(this.activeMessage)
 
           if (this.messages.length > 0) {
-            this.$set(this.chats, index, this.messages[this.messages.length - 1])
+            this.updateChat(this.messages[this.messages.length - 1])
           
             return
           }
 
-          this.chats.splice(index, 1)      
+          this.removeChat(this.activeMessage) 
         })
     },
 
@@ -472,6 +470,24 @@ export default {
     },
 
     /**
+     * Start a new chat with the given user.
+     */
+    startChat(user) {
+      this.newChat = false
+
+      let chat = this.findChatForUser(user)
+
+      if (chat) {
+        this.getChat(chat)
+
+        return
+      }
+
+      this.messages = []
+      this.activeUser = user
+    },
+
+    /**
      * Determine if the given user is typing.
      */
     isTyping(user) {
@@ -499,24 +515,6 @@ export default {
      */
     handleFiles() {
       this.form.files = Object.values(this.$refs.files.files)
-    },
-
-    /**
-     * Start a new chat with the given user.
-     */
-    startChat(user) {
-      this.newChat = false
-
-      let chat = this.findChatForUser(user)
-
-      if (chat) {
-        this.getChat(chat)
-
-        return
-      }
-
-      this.messages = []
-      this.activeUser = user
     },
 
     /**
