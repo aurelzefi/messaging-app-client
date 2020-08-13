@@ -237,13 +237,13 @@ export default {
       formData.append('picture', this.$refs.picture.files[0])
       
       this.$http.post('/api/user/picture', formData)
-        .then((response) => {
+        .then(response => {
           this.$bus.user = response.data
           this.pictureForm.success = true
         })
-        .catch((error) => {
+        .catch(error => {
           this.pictureForm.errors = this.formatErrors(error.response.data.errors)
-        });
+        })
     },
     
     /**
@@ -254,13 +254,13 @@ export default {
       this.informationForm.success = false
       
       this.$http.put('/api/user', this.informationForm)
-        .then((response) => {
+        .then(response => {
           this.$bus.user = response.data
           this.informationForm.success = true
         })
-        .catch((error) => {
+        .catch(error => {
           this.informationForm.errors = this.formatErrors(error.response.data.errors)
-        });
+        })
     },
 
     /**
@@ -271,7 +271,7 @@ export default {
       this.passwordForm.success = false
       
       this.$http.put('/api/user/password', this.passwordForm)
-        .then((response) => {
+        .then(response => {
           this.$bus.user = response.data
           this.passwordForm.success = true
 
@@ -279,9 +279,9 @@ export default {
           this.passwordForm.new_password = ''
           this.passwordForm.new_password_confirmation = ''
         })
-        .catch((error) => {
+        .catch(error => {
           this.passwordForm.errors = this.formatErrors(error.response.data.errors)
-        });
+        })
     },
 
     /**

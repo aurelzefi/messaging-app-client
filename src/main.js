@@ -18,9 +18,9 @@ Vue.prototype.$http = axios.create({ baseURL: API_URL })
 Vue.prototype.$bus = new Vue({
   data: {
     user: null,
+    activeUser: null,
     chats: [],
-    messages: [],
-    activeUser: null
+    messages: []
   }
 })
 

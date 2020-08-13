@@ -267,8 +267,8 @@ export default {
       this.whisper(e)
     })
 
-    this.$bus.$on('preview-done', (e) => {
-      this.form.content = e.content
+    this.$bus.$on('preview-done', (data) => {
+      this.form.content = data.content
 
       this.sendMessage()
     })
@@ -276,7 +276,7 @@ export default {
     ipcRenderer.on('window-open', (e, data) => {
       let chat = this.findChatForActiveUser()
 
-      if (data === true && chat) {
+      if (data && chat) {
         this.getChat(chat)
       }
     })
@@ -366,11 +366,8 @@ export default {
 
       this.$http.delete(`/api/chats/${chat.chat_id}`)
         .then(() => {
+          this.activeUser = null
           this.modal.show = false
-
-          if (this.chatIsActive(chat)) {
-            this.activeUser = null
-          }
 
           this.removeChat(chat)
         })

@@ -31,9 +31,11 @@ export default {
       this.$echo.leave(`App.User.${this.$bus.user.id}`)
 
       this.$bus.user = null
+      this.$bus.activeUser = null
       this.$bus.chats = []
       this.$bus.messages = []
-      this.$bus.activeUser = null
+
+      this.$bus.$emit('chats-updated')
 
       localStorage.removeItem('token')
       
@@ -92,7 +94,9 @@ export default {
      * Find the chat for the active user.
      */
     findChatForActiveUser() {
-      return this.findChatForUser(this.activeUser)
+      if (this.activeUser) {
+        return this.findChatForUser(this.activeUser)
+      }
     },
 
     /**
@@ -132,9 +136,9 @@ export default {
      * Update the chat for the given message.
      */
     updateChat(message) {
-      this.$set(
-        this.chats, this.chats.findIndex(chat => chat.chat_id === message.chat_id), message
-      )
+      this.$set(this.chats, this.chats.findIndex(
+        chat => chat.chat_id === message.chat_id
+      ), message)
     }, 
 
     /**
