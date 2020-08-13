@@ -89,6 +89,36 @@ export default {
     },
 
     /**
+     * Find the chat for the active user.
+     */
+    findChatForActiveUser() {
+      return this.findChatForUser(this.activeUser)
+    },
+
+    /**
+     * Find the chat for the given user.
+     */
+    findChatForUser(user) {
+      return this.chats.find(
+        chat => [chat.sender_id, chat.receiver_id].includes(user.id)
+      )
+    },
+
+    /**
+     * Find the chat for the given ID.
+     */
+    findChatForId(chatId) {
+      return this.chats.find(chat => chat.chat_id === chatId)
+    },
+
+    /**
+     * Find the index for the given chat.
+     */
+    findIndexForChat(chatId) {
+      return this.chats.findIndex(chat => chat.chat_id === chatId)
+    },
+
+    /**
      * Determine if the given chat is active.
      */
     chatIsActive(chat) {
@@ -96,14 +126,12 @@ export default {
         return false
       }
 
-      let ch = this.chats.find(
-        ch => [ch.sender_id, ch.receiver_id].includes(this.activeUser.id)
-      )
+      let ch = this.findChatForActiveUser()
 
       if (ch) {
         return ch.chat_id === chat.chat_id
       }
-
+      
       return false
     },
   }

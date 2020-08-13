@@ -274,11 +274,9 @@ export default {
     })
 
     ipcRenderer.on('window-open', (e, data) => {
-      if (data === true && this.activeUser) {
-        let chat = this.chats.find(
-          chat => [chat.sender_id, chat.receiver_id].includes(this.activeUser.id)
-        )
+      let chat = this.findChatForActiveUser()
 
+      if (data === true && chat) {
         this.getChat(chat)
       }
     })
@@ -350,21 +348,12 @@ export default {
           this.clearFiles()
         })
     },
-
-    /**
-     * Find the index for the given chat.
-     */
-    findIndexForChat(chatId) {
-      return this.chats.findIndex(chat => chat.chat_id === chatId)
-    },
-
+    
     /**
      * Delete the given chat.
      */
     deleteChat() {
-      let chat = this.chats.find(
-        chat => [chat.sender_id, chat.receiver_id].includes(this.activeUser.id)
-      )
+      let chat = this.findChatForActiveUser()
 
       this.chatMenu = false
 
@@ -518,9 +507,7 @@ export default {
     startChat(user) {
       this.newChat = false
 
-      let chat = this.chats.find(
-        chat => [chat.sender_id, chat.receiver_id].includes(user.id)
-      )
+      let chat = this.findChatForUser(user)
 
       if (chat) {
         this.getChat(chat)

@@ -95,21 +95,7 @@ export default {
     listenForMessages() {
       this.$echo.private(`App.User.${this.user.id}`)
         .listen('MessageSent', (e) => {
-          if (this.activeUser && this.activeUser.id === e.message.sender_id && this.windowIsOpen && this.isHome()) {
-            this.messages.push(e.message)
-
-            this.readMessage(e.message)
-          } else {
-            let chat = this.findChatForId(e.message.chat_id)
-
-            e.message.unread_count = chat ? ++chat.unread_count : 1
-
-            this.notify(e.message)
-          }
-          
-          this.updateChatsWithMessage(e.message)
-
-          this.updateBadgeCount()
+          this.handleMessageSent(e.message)
         })
         .listen('MessageRead', (e) => {
           this.handleMessageRead(e.message)
@@ -118,18 +104,29 @@ export default {
           this.handleMessageUnsent(e.message)
         })
         .listen('ChatDeleted', (e) => {
-          let chat = this.chats.find(
-            chat => [chat.sender_id, chat.receiver_id].includes(e.user.id)
-          )
-
-          if (this.chatIsActive(chat)) {
-            this.activeUser = null
-          }
-
-          this.chats.splice(this.chats.findIndex(ch => ch.chat_id === chat.chat_id), 1)
-
-          this.updateBadgeCount()
+          this.handleChatDeleted(e.user)
         })
+    },
+
+    /**
+     * Handle the message sent event.
+     */
+    handleMessageSent(message) {
+      if (this.windowIsOpen && this.isHome() && this.userIsActive(message.sender)) {
+        this.messages.push(message)
+
+        this.readMessage(message)
+      } else {
+        let chat = this.findChatForId(message.chat_id)
+
+        message.unread_count = chat ? ++chat.unread_count : 1
+
+        this.notify(message)
+      }
+      
+      this.updateChatsWithMessage(message)
+
+      this.updateBadgeCount()
     },
 
     /**
@@ -149,14 +146,12 @@ export default {
      */
     handleMessageRead(message) {
       if (this.chatIsActive(message)) {
-        this.$set(
-          this.messages, this.messages.findIndex(m => m.id === message.id), message
-        )
+        this.$set(this.messages, this.messages.findIndex(m => m.id === message.id), message)
       }
 
       message.unread_count = 0
 
-      this.$set(this.chats, this.chats.findIndex(ch => ch.chat_id === message.chat_id), message)
+      this.$set(this.chats, this.findIndexForChat(message.chat_id), message)
     },
 
     /**
@@ -166,19 +161,17 @@ export default {
       this.$http.get(`/api/chats/${message.chat_id}`)
         .then(response => {
           if (this.chatIsActive(message)) {
-            this.messages.splice(
-              this.messages.findIndex(m => m.id === message.id), 1
-            )
+            this.messages.splice(this.messages.findIndex(m => m.id === message.id), 1)
           }
           
-          let chat = this.chats.find(chat => chat.chat_id === message.chat_id)
+          let chat = this.findChatForId(message.chat_id)
 
           if (! message.read_at) {
             chat.unread_count--
           }
 
           if (response.data.length > 0) {
-            let message = response.data.pop()
+            let message = response.data[response.data.length - 1]
 
             message.unread_count = chat.unread_count
 
@@ -187,7 +180,7 @@ export default {
             return
           }
 
-          this.chats.splice(this.chats.findIndex(ch => ch.chat_id === chat.chat_id), 1)
+          this.chats.splice(this.findIndexForChat(chat.chat_id), 1)
         })
     },
 
@@ -195,7 +188,7 @@ export default {
      * Update chats with the given message.
      */
     updateChatsWithMessage(message) {
-      let index = this.chats.findIndex(chat => chat.chat_id === message.chat_id)
+      let index = this.findIndexForChat(message.chat_id)
 
       if (index === -1) {
         this.chats.unshift(message)
@@ -213,10 +206,25 @@ export default {
     },
 
     /**
-     * Find the chat for the given ID.
+     * Handle the chat deleted event.
      */
-    findChatForId(chatId) {
-      return this.chats.find(chat => chat.chat_id === chatId)
+    handleChatDeleted(user) {
+      let chat = this.findChatForUser(user)
+
+      if (this.chatIsActive(chat)) {
+        this.activeUser = null
+      }
+
+      this.chats.splice(this.findIndexForChat(chat.chat_id), 1)
+
+      this.updateBadgeCount()
+    },
+
+    /**
+     * Determine if the given user is active.
+     */
+    userIsActive(user) {
+      return this.activeUser && this.activeUser.id === user.id
     },
 
     /**
