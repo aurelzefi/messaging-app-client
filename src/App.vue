@@ -125,8 +125,6 @@ export default {
       }
       
       this.updateChatsWithMessage(message)
-
-      this.updateBadgeCount()
     },
 
     /**
