@@ -127,6 +127,8 @@ export default {
           }
 
           this.chats.splice(this.chats.findIndex(ch => ch.chat_id === chat.chat_id), 1)
+
+          this.updateBadgeCount()
         })
     },
 
@@ -206,6 +208,8 @@ export default {
       this.chats.sort((a, b) => {
         return a.id === message.id ? -1 : b === message.id ? 1 : 0
       })
+
+      this.updateBadgeCount()
     },
 
     /**
