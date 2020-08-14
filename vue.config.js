@@ -11,5 +11,5 @@ module.exports = {
         args[0].title = 'Electron App';
         return args;
       });
-  },
+  }
 }
