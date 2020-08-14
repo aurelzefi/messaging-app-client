@@ -287,6 +287,10 @@ export default {
      * Get the messages for the given chat.
      */
     getChat(chat) {
+      if (this.chatIsActive(chat)) {
+        return
+      }
+
       this.activeUser = this.chatUser(chat)
 
       if (chat.unread_count > 0) {

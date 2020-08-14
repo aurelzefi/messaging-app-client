@@ -68,7 +68,7 @@ export default {
     })
 
     this.$bus.$on('message-sent', (message) => {
-      this.updateChatsWithMessage(message)
+      this.updateChatsForMessage(message)
     })
 
     ipcRenderer.on('window-open', (e, data) => {
@@ -124,7 +124,7 @@ export default {
         this.notify(message)
       }
       
-      this.updateChatsWithMessage(message)
+      this.updateChatsForMessage(message)
     },
 
     /**
@@ -133,10 +133,8 @@ export default {
     readMessage(message) {
       this.$http.put(`/api/chats/${message.chat_id}`)
         .then(response => {
-          this.handleMessageRead(
-            response.data.find(m => m.id === message.id)
-          )
-        }) 
+          this.handleMessageRead(response.data.find(m => m.id === message.id))
+        })
     },
 
     /**
@@ -173,7 +171,7 @@ export default {
 
             message.unread_count = chat.unread_count
 
-            this.updateChatsWithMessage(message)
+            this.updateChatsForMessage(message)
 
             return
           }
@@ -183,9 +181,9 @@ export default {
     },
 
     /**
-     * Update chats with the given message.
+     * Update chats for the given message.
      */
-    updateChatsWithMessage(message) {
+    updateChatsForMessage(message) {
       let index = this.chats.findIndex(chat => chat.chat_id === message.chat_id)
 
       if (index === -1) {
@@ -247,7 +245,7 @@ export default {
      */
     updateBadgeCount() {
       ipcRenderer.send(
-        'badge-count-updated', this.chats.filter(chat => chat.unread_count > 0).length
+        'chats-updated', this.chats.filter(chat => chat.unread_count > 0).length
       )
     }
   }

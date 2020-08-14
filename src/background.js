@@ -102,6 +102,6 @@ if (isDevelopment) {
   }
 }
 
-ipcMain.on('badge-count-updated', (e, count) => {
+ipcMain.on('chats-updated', (e, count) => {
   app.setBadgeCount(count)
 })
