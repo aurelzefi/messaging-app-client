@@ -3,7 +3,7 @@
     <confirm v-if="modal.show" :data="modal" :hide="() => modal.show = false"></confirm>
 
     <router-link class="fixed top-0 left-0 ml-2 mt-2 p-2 rounded-full hover:bg-gray-200" to="/home">
-      <svg class="chevron-left w-8 h-8 text-gray-700" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+      <svg viewBox="0 0 20 20" fill="currentColor" class="chevron-left w-8 h-8 text-gray-700"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
     </router-link>
 
     <div class="mt-16 border rounded border-gray-200"  style="width: 36rem;">
@@ -34,7 +34,7 @@
         Information
       </div>
 
-      <div class="p-3 text-sm">        
+      <div class="p-3 text-sm">
         <div class="p-4 bg-green-100 border border-green-500 text-green-700 rounded" v-if="informationForm.success">
           The account information has been updated.
         </div>
@@ -47,13 +47,13 @@
               </div>
 
               <div class="w-2/3">
-                <input class="w-full mt-1 px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" :class="{ 'border-red-700': this.informationForm.errors.name }"  id="name" type="text" v-model="informationForm.name"> 
+                <input class="w-full mt-1 px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" :class="{ 'border-red-700': this.informationForm.errors.name }"  id="name" type="text" v-model="informationForm.name">
               </div>
             </div>
 
             <div class="w-full flex">
               <div class="w-1/3"></div>
-              <div class="w-2/3"> 
+              <div class="w-2/3">
                 <span class="text-xs text-red-700">{{ this.informationForm.errors.name }}</span>
               </div>
             </div>
@@ -66,13 +66,13 @@
               </div>
 
               <div class="w-2/3">
-                <input class="w-full mt-1 px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" :class="{ 'border-red-700': this.informationForm.errors.email }"  id="email" type="text" v-model="informationForm.email"> 
+                <input class="w-full mt-1 px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" :class="{ 'border-red-700': this.informationForm.errors.email }"  id="email" type="text" v-model="informationForm.email">
               </div>
             </div>
 
             <div class="w-full flex">
               <div class="w-1/3"></div>
-              <div class="w-2/3"> 
+              <div class="w-2/3">
                 <span class="text-xs text-red-700">{{ this.informationForm.errors.email }}</span>
               </div>
             </div>
@@ -106,13 +106,13 @@
               </div>
 
               <div class="w-2/3">
-                <input class="w-full mt-1 px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" :class="{ 'border-red-700': this.passwordForm.errors.password }"  id="password" type="password" v-model="passwordForm.password"> 
+                <input class="w-full mt-1 px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" :class="{ 'border-red-700': this.passwordForm.errors.password }"  id="password" type="password" v-model="passwordForm.password">
               </div>
             </div>
 
             <div class="w-full flex">
               <div class="w-1/3"></div>
-              <div class="w-2/3"> 
+              <div class="w-2/3">
                 <span class="text-xs text-red-700">{{ this.passwordForm.errors.password }}</span>
               </div>
             </div>
@@ -125,13 +125,13 @@
               </div>
 
               <div class="w-2/3">
-                <input class="w-full mt-1 px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" :class="{ 'border-red-700': this.passwordForm.errors.new_password }"  id="new-password" type="password" v-model="passwordForm.new_password"> 
+                <input class="w-full mt-1 px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" :class="{ 'border-red-700': this.passwordForm.errors.new_password }"  id="new-password" type="password" v-model="passwordForm.new_password">
               </div>
             </div>
 
             <div class="w-full flex">
               <div class="w-1/3"></div>
-              <div class="w-2/3"> 
+              <div class="w-2/3">
                 <span class="text-xs text-red-700">{{ this.passwordForm.errors.new_password }}</span>
               </div>
             </div>
@@ -144,7 +144,7 @@
               </div>
 
               <div class="w-2/3">
-                <input class="w-full mt-1 px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" :class="{ 'border-red-700': this.passwordForm.errors.new_password_confirmation }"  id="new-password-confirmation" type="password" v-model="passwordForm.new_password_confirmation"> 
+                <input class="w-full mt-1 px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" :class="{ 'border-red-700': this.passwordForm.errors.new_password_confirmation }"  id="new-password-confirmation" type="password" v-model="passwordForm.new_password_confirmation">
               </div>
             </div>
           </div>
@@ -224,11 +224,11 @@ export default {
     updatePicture() {
       this.pictureForm.errors = {}
       this.pictureForm.success = false
-      
+
       const formData = new FormData()
-      
+
       formData.append('picture', this.$refs.picture.files[0])
-      
+
       this.$http.post('/api/user/picture', formData)
         .then(response => {
           this.$bus.user = response.data
@@ -238,14 +238,14 @@ export default {
           this.pictureForm.errors = this.formatErrors(error.response.data.errors)
         })
     },
-    
+
     /**
      * Update the information.
      */
     updateInformation() {
       this.informationForm.errors = {}
       this.informationForm.success = false
-      
+
       this.$http.put('/api/user', this.informationForm)
         .then(response => {
           this.$bus.user = response.data
@@ -262,7 +262,7 @@ export default {
     updatePassword() {
       this.passwordForm.errors = {}
       this.passwordForm.success = false
-      
+
       this.$http.put('/api/user/password', this.passwordForm)
         .then(response => {
           this.$bus.user = response.data
@@ -303,6 +303,6 @@ export default {
     openFileBrowser() {
       this.$refs.picture.click()
     },
-  } 
+  }
 }
 </script>

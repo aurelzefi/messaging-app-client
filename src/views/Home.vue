@@ -17,13 +17,13 @@
 
           <li class="mr-4">
             <button class="p-2 align-middle rounded-full outline-none focus:bg-gray-400 focus:outline-none" type="button" @click="newChat = true">
-              <svg class="h-6 w-6 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+              <svg viewBox="0 0 20 20" fill="currentColor" class="chat w-6 h-6 text-gray-700"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"></path></svg>
             </button>
           </li>
 
           <li class="relative mr-4">
             <button class="p-2 align-middle rounded-full outline-none focus:bg-gray-400 focus:outline-none" type="button" @click="userMenu = ! userMenu">
-              <svg class="h-6 w-6 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
+              <svg viewBox="0 0 20 20" fill="currentColor" class="chevron-down w-6 h-6 text-gray-700"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
             </button>
             <button class="fixed inset-0 h-full w-full cursor-default focus:outline-none z-10" tabindex="-1" v-if="userMenu" @click="userMenu = false"></button>
             <div class="w-48 absolute bg-white right-0 mt-1 border rounded border-gray-200 shadow z-20" v-if="userMenu">
@@ -53,14 +53,14 @@
         <ul class="flex items-center">
           <li class="mr-4">
             <button class="p-2 align-middle rounded-full outline-none focus:bg-gray-400 focus:outline-none" type="button" @click="openFileBrowser">
-              <svg class="h-6 w-6 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+              <svg viewBox="0 0 20 20" fill="currentColor" class="paper-clip w-6 h-6 text-gray-700"><path fill-rule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clip-rule="evenodd"></path></svg>
             </button>
             <input class="hidden" type="file" ref="files" multiple @change="handleFiles">
           </li>
 
           <li class="relative mr-4 z-0">
             <button class="p-2 align-middle rounded-full outline-none focus:bg-gray-400 focus:outline-none" type="button" @click="chatMenu = ! chatMenu">
-              <svg class="h-6 w-6 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
+              <svg viewBox="0 0 20 20" fill="currentColor" class="chevron-down w-6 h-6 text-gray-700"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
             </button>
             <button class="fixed inset-0 h-full w-full cursor-default focus:outline-none" tabindex="-1" v-if="chatMenu" @click="chatMenu = false"></button>
             <div class="w-48 absolute bg-white right-0 mt-1 border rounded border-gray-200 shadow" v-if="chatMenu">
@@ -94,7 +94,7 @@
                 <template v-if="isTyping(chatUser(chat))">Typing...</template>
 
                 <template v-else>
-                  <svg class="inline h-4 w-4" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor" v-if="chat.files.length"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg> <template v-if="chat.content">{{ chat.content }}</template>
+                  <svg viewBox="0 0 20 20" fill="currentColor" class="inline paper-clip w-4 h-4" v-if="chat.files.length"><path fill-rule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clip-rule="evenodd"></path></svg> <template v-if="chat.content">{{ chat.content }}</template>
                 </template>
               </span>
 
@@ -122,7 +122,7 @@
             <li ref="message" class="w-7/12 flex flex-col" :class="{ 'ml-auto justify-end items-end': isSentMessage(message), 'items-start': ! isSentMessage(message), 'mt-3': messages.indexOf(message) > 0 }" v-for="message in messages" :key="message.id">
               <div class="relative bg-gray-200 rounded shadow" :style="[ message.files.length ? { width: '20rem' } : '' ]" @mouseover="hoveredMessage = message" @mouseleave="hoveredMessage = null">
                 <button class="absolute right-0 p-1 mr-1 mt-1 focus:outline-none" :class="{ 'bg-gray-200': message.files.length === 0 }" type="button" v-if="shouldShowMenu(message)" @click="activeMessage = message">
-                  <svg class="h-4 w-4" :class="[ message.files.length > 0 ? 'text-white' : 'text-gray-700' ]" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
+                  <svg viewBox="0 0 20 20" fill="currentColor" class="chevron-down w-4 h-4" :class="[ message.files.length > 0 ? 'text-white' : 'text-gray-700' ]"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
                 </button>
                 <button class="fixed inset-0 h-full w-full cursor-default focus:outline-none z-10" tabindex="-1" v-if="isActive(message)" @click="activeMessage = null"></button>
                 <div class="w-48 absolute bg-white right-0 mt-6 mr-1 border rounded border-gray-200 shadow z-20" v-if="isActive(message)">
