@@ -1,5 +1,6 @@
 {
-  "name": "electron-vue-app",
+  "name": "electron-messaging-client",
+  "productName": "Electron App",
   "version": "0.1.0",
   "private": true,
   "scripts": {

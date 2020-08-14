@@ -10,6 +10,8 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 // be closed automatically when the JavaScript object is garbage collected.
 let win
 
+let quitting = false
+
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
@@ -46,9 +48,13 @@ function createWindow() {
   }
 
   win.on('close', (e) => {
-    e.preventDefault()
-    win.hide()
-    win.webContents.send('window-open', false)
+    if (quitting) {
+      win = null
+    } else {
+      e.preventDefault()
+      win.hide()
+      win.webContents.send('window-open', false)
+    }
   })
 }
 
@@ -85,6 +91,10 @@ app.on('ready', async () => {
     }
   }
   createWindow()
+})
+
+app.on('before-quit', () => {
+  quitting = true
 })
 
 // Exit cleanly on request from parent process in development mode.

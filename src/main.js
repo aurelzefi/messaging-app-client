@@ -31,7 +31,7 @@ Vue.prototype.$echo = new Echo({
   broadcaster: 'pusher',
   key: 'key',
   forceTLS: false,
-  wsHost: window.location.hostname,
+  wsHost: 'localhost',
   wsPort: 6001,
   disableStats: true,
   authEndpoint: `${API_URL}/api/broadcasting/auth`,
