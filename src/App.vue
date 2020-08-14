@@ -122,9 +122,9 @@ export default {
      * Handle the message sent event.
      */
     handleMessageSent(message) {
-      this.scroll = null
-
       if (this.windowIsOpen && this.isHome() && this.userIsActive(message.sender)) {
+        this.scroll = null
+
         this.messages.push(message)
 
         this.readMessage(message)
