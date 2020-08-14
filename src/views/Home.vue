@@ -508,6 +508,8 @@ export default {
     startChat(user) {
       this.newChat = false
 
+      console.log(user)
+
       let chat = this.findChatForUser(user)
 
       if (chat) {
