@@ -51,6 +51,16 @@ export default {
       set(value) {
         this.$bus.messages = value
       }
+    },
+
+    scroll: {
+      get() {
+        return this.$bus.scroll
+      },
+
+      set(value) {
+        this.$bus.scroll = value
+      }
     }
   },
 
@@ -112,6 +122,8 @@ export default {
      * Handle the message sent event.
      */
     handleMessageSent(message) {
+      this.scroll = null
+
       if (this.windowIsOpen && this.isHome() && this.userIsActive(message.sender)) {
         this.messages.push(message)
 
@@ -141,6 +153,8 @@ export default {
      * Handle the message read event.
      */
     handleMessageRead(message) {
+      this.scroll = null
+
       if (this.chatIsActive(message)) {
         this.updateMessage(message)
       }

@@ -361,6 +361,7 @@ export default {
      */
     sendMessage() {
       this.errors = {}
+      this.scroll = null
 
       if (this.form.content.length === 0 && this.form.files.length === 0) {
         return
