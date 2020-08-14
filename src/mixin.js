@@ -119,10 +119,6 @@ export default {
      * Determine if the given chat is active.
      */
     chatIsActive(chat) {
-      if (! this.activeUser) {
-        return false
-      }
-
       let ch = this.findChatForActiveUser()
 
       if (ch) {

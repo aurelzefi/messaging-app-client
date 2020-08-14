@@ -188,16 +188,14 @@ export default {
 
       if (index === -1) {
         this.chats.unshift(message)
-
-        return
+      } else {
+        this.updateChat(message)
+        
+        this.chats.sort((a, b) => {
+          return a.id === message.id ? -1 : b === message.id ? 1 : 0
+        })
       }
-
-      this.updateChat(message)
       
-      this.chats.sort((a, b) => {
-        return a.id === message.id ? -1 : b === message.id ? 1 : 0
-      })
-
       this.updateBadgeCount()
     },
 
