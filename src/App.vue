@@ -123,7 +123,7 @@ export default {
 
         this.notify(message)
       }
-      
+
       this.updateChatsForMessage(message)
     },
 
@@ -159,7 +159,7 @@ export default {
           if (this.chatIsActive(message)) {
             this.removeMessage(message)
           }
-          
+
           let chat = this.findChatForId(message.chat_id)
 
           if (! message.read_at) {
@@ -192,12 +192,12 @@ export default {
         this.chats.unshift(message)
       } else {
         this.updateChat(message)
-        
+
         this.chats.sort((a, b) => {
           return a.id === message.id ? -1 : b === message.id ? 1 : 0
         })
       }
-      
+
       this.updateBadgeCount()
     },
 

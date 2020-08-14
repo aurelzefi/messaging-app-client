@@ -40,7 +40,7 @@
         </ul>
       </div>
 
-      <div class="w-2/3 flex justify-between items-center bg-gray-100 border-gray-200 p-2 border-b" v-if="activeUser">        
+      <div class="w-2/3 flex justify-between items-center bg-gray-100 border-gray-200 p-2 border-b" v-if="activeUser">
         <router-link class="flex items-center" :to="{ name: 'users.show', params: { id: activeUser.id } }">
           <img class="h-10 w-10 rounded-full" :src="picture(activeUser)">
 
@@ -82,7 +82,7 @@
       <ul class="cursor-pointer" v-if="chats.length">
         <li class="flex items-center p-3 border-b hover:bg-gray-200" :class="{ 'bg-gray-300': chatIsActive(chat) }" v-for="chat in chats" :key="chat.id" @click="getChat(chat)">
           <img class="h-12 w-12 rounded-full" :src="picture(chatUser(chat))">
-            
+
           <div class="w-full flex flex-col ml-2 overflow-hidden">
             <div class="flex justify-between items-center">
               <span class="text-gray-900 truncate">{{ chatUser(chat).name }}</span>
@@ -138,7 +138,7 @@
                     <img class="inline rounded max-w-full" :src="fileUrl(file)" @load="scrollToMessagesBottom">
                   </a>
                 </div>
-                
+
                 <div class="flex flex-col px-2 py-1">
                   <span class="text-sm" v-if="message.content" v-message-inserted="scrollToMessagesBottom">
                     {{ message.content }}
@@ -172,14 +172,14 @@
     <div class="w-2/3 my-auto text-center" v-else>
       <img class="mx-auto" src="./../assets/logo.png">
 
-      Empty space...
+      Start chating...
     </div>
   </div>
 </template>
 
 <script>
-import { ipcRenderer } from 'electron'
 import _ from 'lodash'
+import { ipcRenderer } from 'electron'
 import Confirm from '../components/Confirm.vue'
 import Errors from  '../components/Errors.vue'
 import File from '../components/File.vue'
@@ -233,7 +233,7 @@ export default {
 
       set(value) {
         this.$bus.activeUser = value
-      } 
+      }
     },
 
     chats: {
@@ -243,7 +243,7 @@ export default {
 
       set(value) {
         this.$bus.chats = value
-      } 
+      }
     },
 
     messages: {
@@ -295,6 +295,8 @@ export default {
   methods: {
     registerScroll() {
       this.scroll = this.$refs.messages.scrollTop
+
+      console.log(this.scroll)
     },
 
     /**
@@ -319,7 +321,7 @@ export default {
             this.updateChat(message)
 
             this.$bus.$emit('chats-updated')
-          }) 
+          })
 
           return
       }
@@ -362,11 +364,11 @@ export default {
         })
         .catch(error => {
           this.errors = this.formatErrors(error.response.data.errors)
-          
+
           this.clearFiles()
         })
     },
-    
+
     /**
      * Delete the given chat.
      */
@@ -403,11 +405,11 @@ export default {
 
           if (this.messages.length > 0) {
             this.updateChat(this.messages[this.messages.length - 1])
-          
+
             return
           }
 
-          this.removeChat(this.activeMessage) 
+          this.removeChat(this.activeMessage)
         })
     },
 
@@ -430,7 +432,7 @@ export default {
 
           if (e.submit) {
             this.typings.splice(this.typings.indexOf(e.user.id), 1)
-          
+
             return
           }
 
@@ -521,7 +523,7 @@ export default {
      */
     clearFiles() {
       this.form.files = []
-      
+
       this.$refs.files.value = ''
     },
 
@@ -582,7 +584,7 @@ export default {
       let index = Object.keys(this.groupedMessages).findIndex(d => d === date)
 
       return this.isSentMessage(message) &&
-        index === Object.keys(this.groupedMessages).length - 1 && 
+        index === Object.keys(this.groupedMessages).length - 1 &&
         group.indexOf(message) === group.length - 1 &&
         message.read_at
     }
