@@ -177,6 +177,8 @@ export default {
           }
 
           this.removeChat(chat)
+
+          this.updateBadgeCount()
         })
     },
 
