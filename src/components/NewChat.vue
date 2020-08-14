@@ -1,7 +1,7 @@
 <template>
   <div class="fixed h-full w-full flex justify-center items-center z-20">
     <button class="fixed h-full w-full cursor-default focus:outline-none bg-black opacity-75" @click="hide"></button>
-    <div class="relative bg-white rounded-md" style="width: 36rem;">
+    <div class="relative bg-white rounded" style="width: 36rem;">
       <div class="p-3 border-b border-gray-200">Start New Chat</div>
 
       <div class="p-3 border-gray-200">

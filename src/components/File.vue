@@ -4,7 +4,7 @@
       <svg class="h-8 w-8" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M6 18L18 6M6 6l12 12"></path></svg>
     </button>
     <button class="fixed h-full w-full cursor-default focus:outline-none bg-black opacity-75" @click="hide"></button>
-    <img class="relative rounded-md" style="max-height: 95vh;" :src="fileUrl(file)">
+    <img class="relative rounded" style="max-height: 95vh;" :src="fileUrl(file)">
   </div>
 </template>
 

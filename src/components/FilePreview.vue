@@ -5,7 +5,7 @@
     </button>
     <button class="fixed h-full w-full cursor-default focus:outline-none bg-black opacity-75" @click="hide"></button>
     <div class="relative flex flex-col items-center my-4" style="width: 36rem;">
-      <img class="rounded-md" style="max-height: 75vh;" :src="active">
+      <img class="rounded" style="max-height: 75vh;" :src="active">
 
       <div class="mt-4 w-full">
         <form class="flex" @submit.prevent="send">
@@ -19,7 +19,7 @@
 
       <div class="flex mt-4 justify-center">
         <button class="focus:outline-none" :class="{ 'ml-2': urls.indexOf(url) > 0 }" v-for="url in urls" :key="url" @click="active = url">
-          <img class="w-20 h-20 rounded-md" :src="url">
+          <img class="w-20 h-20 rounded" :src="url">
         </button>
       </div>
     </div>

@@ -6,17 +6,17 @@
       <svg class="chevron-left w-8 h-8 text-gray-700" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
     </router-link>
 
-    <div class="mt-16 border rounded-md border-gray-200"  style="width: 36rem;">
+    <div class="mt-16 border rounded border-gray-200"  style="width: 36rem;">
       <div class="p-3 bg-gray-200">
         Picture
       </div>
 
       <div class="p-3 text-sm">
-        <div class="p-4 bg-green-500 text-white rounded" v-if="pictureForm.success">
+        <div class="p-4 bg-green-100 border border-green-500 text-green-700 rounded" v-if="pictureForm.success">
           The profile picture has been updated.
         </div>
 
-        <div class="p-4 bg-red-500 text-white rounded" v-if="pictureForm.errors.picture">
+        <div class="p-4 bg-red-100 border border-red-500 text-red-700 rounded" v-if="pictureForm.errors.picture">
           {{ pictureForm.errors.picture }}
         </div>
 
@@ -29,13 +29,13 @@
       </div>
     </div>
 
-    <div class="mt-8 border rounded-md border-gray-200" style="width: 36rem;">
+    <div class="mt-8 border rounded border-gray-200" style="width: 36rem;">
       <div class="p-3 bg-gray-200">
         Information
       </div>
 
-      <div class="p-3 text-sm">
-        <div class="p-4 bg-green-500 text-white rounded" v-if="informationForm.success">
+      <div class="p-3 text-sm">        
+        <div class="p-4 bg-green-100 border border-green-500 text-green-700 rounded" v-if="informationForm.success">
           The account information has been updated.
         </div>
 
@@ -88,13 +88,13 @@
       </div>
     </div>
 
-    <div class="mt-8 border rounded-md border-gray-200" style="width: 36rem;">
+    <div class="mt-8 border rounded border-gray-200" style="width: 36rem;">
       <div class="p-3 bg-gray-200">
         Password
       </div>
 
       <div class="p-3 text-sm">
-        <div class="p-4 bg-green-500 text-white rounded" v-if="passwordForm.success">
+        <div class="p-4 bg-green-100 border border-green-500 text-green-700 rounded" v-if="passwordForm.success">
           The password has been updated.
         </div>
 
@@ -147,13 +147,6 @@
                 <input class="w-full mt-1 px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" :class="{ 'border-red-700': this.passwordForm.errors.new_password_confirmation }"  id="new-password-confirmation" type="password" v-model="passwordForm.new_password_confirmation"> 
               </div>
             </div>
-
-            <div class="w-full flex">
-              <div class="w-1/3"></div>
-              <div class="w-2/3"> 
-                <span class="text-xs text-red-700">{{ this.passwordForm.errors.new_password_confirmation }}</span>
-              </div>
-            </div>
           </div>
 
           <div class="w-full flex mt-4">
@@ -166,17 +159,17 @@
       </div>
     </div>
 
-    <div class="my-8 border rounded-md border-gray-200" style="width: 36rem;">
+    <div class="my-8 border rounded border-gray-200" style="width: 36rem;">
       <div class="p-3 bg-gray-200">
         Delete Account
       </div>
 
       <div class="p-3 text-sm">
-        <div class="p-4 bg-orange-200 text-orange-800 rounded-md">
+        <div class="p-4 bg-orange-100 border border-orange-500 text-orange-700 rounded">
           This action will delete all your data and is not reversible.
         </div>
 
-        <button class="px-4 py-2 mt-4 bg-red-600 hover:bg-red-500 rounded text-white focus:outline-none" type="button" @click="openDeleteAccountModal">
+        <button class="px-4 py-2 mt-4 bg-red-700 hover:bg-red-600 rounded text-white focus:outline-none" type="button" @click="openDeleteAccountModal">
           Delete Account
         </button>
       </div>

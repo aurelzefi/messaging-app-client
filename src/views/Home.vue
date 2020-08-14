@@ -26,7 +26,7 @@
               <svg class="h-6 w-6 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
             </button>
             <button class="fixed inset-0 h-full w-full cursor-default focus:outline-none z-10" tabindex="-1" v-if="userMenu" @click="userMenu = false"></button>
-            <div class="w-48 absolute bg-white right-0 mt-1 border rounded-md border-gray-200 shadow-md z-20" v-if="userMenu">
+            <div class="w-48 absolute bg-white right-0 mt-1 border rounded border-gray-200 shadow z-20" v-if="userMenu">
               <ul class="py-2 text-sm text-gray-700">
                 <li>
                   <router-link class="block px-3 py-2 hover:bg-gray-200" to="/settings">Settings</router-link>
@@ -63,7 +63,7 @@
               <svg class="h-6 w-6 text-gray-700" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
             </button>
             <button class="fixed inset-0 h-full w-full cursor-default focus:outline-none" tabindex="-1" v-if="chatMenu" @click="chatMenu = false"></button>
-            <div class="w-48 absolute bg-white right-0 mt-1 border rounded-md border-gray-200 shadow-md" v-if="chatMenu">
+            <div class="w-48 absolute bg-white right-0 mt-1 border rounded border-gray-200 shadow" v-if="chatMenu">
               <ul class="py-2 text-sm text-gray-700">
                 <li>
                   <router-link class="block px-3 py-2 hover:bg-gray-200" :to="{ name: 'users.show', params: { id: activeUser.id } }">Contact Info</router-link>
@@ -111,21 +111,21 @@
       </div>
     </div>
 
-    <div ref="messages" class="w-2/3 mt-16 overflow-auto" style="height: calc(100vh - 8rem)" v-if="activeUser">
+    <div ref="messages" class="w-2/3 mt-16 overflow-auto" style="height: calc(100vh - 8rem)" v-if="activeUser" @scroll="registerScroll">
       <div class="p-3" v-if="Object.keys(groupedMessages).length">
         <div :class=" { 'mt-3': index > 0 }" v-for="(messages, date, index) in groupedMessages" :key="date">
           <div class="text-center">
-            <span class="px-2 py-1 text-sm bg-gray-200 rounded-md shadow">{{ date }}</span>
+            <span class="px-2 py-1 text-sm bg-gray-200 rounded shadow">{{ date }}</span>
           </div>
 
           <ul class="mt-3">
             <li ref="message" class="w-7/12 flex flex-col" :class="{ 'ml-auto justify-end items-end': isSentMessage(message), 'items-start': ! isSentMessage(message), 'mt-3': messages.indexOf(message) > 0 }" v-for="message in messages" :key="message.id">
-              <div class="relative bg-gray-200 rounded-md shadow" :style="[ message.files.length ? { width: '20rem' } : '' ]" @mouseover="hoveredMessage = message" @mouseleave="hoveredMessage = null">
+              <div class="relative bg-gray-200 rounded shadow" :style="[ message.files.length ? { width: '20rem' } : '' ]" @mouseover="hoveredMessage = message" @mouseleave="hoveredMessage = null">
                 <button class="absolute right-0 p-1 mr-1 mt-1 focus:outline-none" :class="{ 'bg-gray-200': message.files.length === 0 }" type="button" v-if="shouldShowMenu(message)" @click="activeMessage = message">
                   <svg class="h-4 w-4" :class="[ message.files.length > 0 ? 'text-white' : 'text-gray-700' ]" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 9l-7 7-7-7"></path></svg>
                 </button>
                 <button class="fixed inset-0 h-full w-full cursor-default focus:outline-none z-10" tabindex="-1" v-if="isActive(message)" @click="activeMessage = null"></button>
-                <div class="w-48 absolute bg-white right-0 mt-6 mr-1 border rounded-md border-gray-200 shadow-md z-20" v-if="isActive(message)">
+                <div class="w-48 absolute bg-white right-0 mt-6 mr-1 border rounded border-gray-200 shadow z-20" v-if="isActive(message)">
                   <ul class="py-2 text-sm text-gray-700">
                     <li>
                       <a class="block px-3 py-2 hover:bg-gray-200 cursor-pointer" @click="openDeleteMessageModal">Delete</a>
@@ -135,7 +135,7 @@
 
                 <div class="p-1" v-if="message.files.length">
                   <a class="block cursor-pointer text-center" :class="{ 'mt-1': message.files.indexOf(file) > 0 }" v-for="file in message.files" :key="file.id" @click="activeFile = file">
-                    <img class="inline rounded-md max-w-full" :src="fileUrl(file)" @load="scrollToMessagesBottom">
+                    <img class="inline rounded max-w-full" :src="fileUrl(file)" @load="scrollToMessagesBottom">
                   </a>
                 </div>
                 
@@ -254,6 +254,16 @@ export default {
       set(value) {
         this.$bus.messages = value
       }
+    },
+
+    scroll: {
+      get() {
+        return this.$bus.scroll
+      },
+
+      set(value) {
+        this.$bus.scroll = value
+      }
     }
   },
 
@@ -283,6 +293,10 @@ export default {
   },
 
   methods: {
+    registerScroll() {
+      this.scroll = this.$refs.messages.scrollTop
+    },
+
     /**
      * Get the messages for the given chat.
      */

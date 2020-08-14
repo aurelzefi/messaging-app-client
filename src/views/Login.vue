@@ -4,7 +4,7 @@
       <img src="./../assets/logo.png">
     </div>
 
-    <div class="mt-6 px-6 py-4 bg-white rounded-md" style="width: 24rem;">
+    <div class="mt-6 px-6 py-4 bg-white rounded" style="width: 24rem;">
       <form @submit.prevent="login">
         <div>
           <label class="block text-sm text-gray-700" for="email">Email</label>
