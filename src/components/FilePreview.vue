@@ -49,8 +49,8 @@ export default {
    * Mount the component.
    */
   mounted() {
-    this.files.forEach((file) => {
-      this.urls.push(URL.createObjectURL(file))
+    this.urls = this.files.map((file) => {
+      return URL.createObjectURL(file)
     })
 
     this.active = this.urls[0]

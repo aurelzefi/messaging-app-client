@@ -153,9 +153,9 @@ export default {
      * Handle the message read event.
      */
     handleMessageRead(message) {
-      this.scroll = null
-
       if (this.chatIsActive(message)) {
+        this.scroll = null
+
         this.updateMessage(message)
       }
 
