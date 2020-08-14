@@ -20,7 +20,8 @@ Vue.prototype.$bus = new Vue({
     user: null,
     activeUser: null,
     chats: [],
-    messages: []
+    messages: [],
+    scroll: null
   }
 })
 

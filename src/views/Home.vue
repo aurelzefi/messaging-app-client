@@ -199,22 +199,22 @@ export default {
         files: []
       },
 
+      modal: {
+        show: false,
+        title: '',
+        body: '',
+        method: null
+      },
+
       errors: {},
       typings: [],
-
       userMenu: false,
       chatMenu: false,
       hoveredMessage: null,
       newChat: false,
       activeMessage: null,
       activeFile: null,
-
-      modal: {
-        show: false,
-        title: '',
-        body: '',
-        method: null
-      }
+      scrollCandidate: 0
     }
   },
 
@@ -292,11 +292,34 @@ export default {
     })
   },
 
-  methods: {
-    registerScroll() {
-      this.scroll = this.$refs.messages.scrollTop
+  /**
+   * Save the scroll state before destroying the component.
+   */
+  beforeDestroy() {
+    this.scroll = this.scrollCandidate
+  },
 
-      console.log(this.scroll)
+  methods: {
+    /**
+     * Register the scroll state.
+     */
+    registerScroll() {
+      this.scrollCandidate = this.$refs.messages.scrollTop
+    },
+
+    /**
+     * Scroll to the botton of the messages container.
+     */
+    scrollToMessagesBottom() {
+      let container = this.$refs.messages
+
+      if (this.scroll === null) {
+        container.scrollTop = container.scrollHeight
+
+        return
+      }
+
+      container.scrollTop = this.scroll
     },
 
     /**
@@ -307,6 +330,7 @@ export default {
         return
       }
 
+      this.scroll = null
       this.activeUser = this.chatUser(chat)
 
       if (chat.unread_count > 0) {
@@ -468,15 +492,6 @@ export default {
           user: this.$bus.user,
           submit: e.key === 'Enter'
         })
-    },
-
-    /**
-     * Scroll to the botton of the messages container.
-     */
-    scrollToMessagesBottom() {
-      let container = this.$refs.messages
-
-      container.scrollTop = container.scrollHeight
     },
 
     /**
