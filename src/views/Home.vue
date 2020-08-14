@@ -308,7 +308,7 @@ export default {
     },
 
     /**
-     * Scroll to the botton of the messages container.
+     * Scroll to the bottom of the messages container.
      */
     scrollToMessagesBottom() {
       let container = this.$refs.messages
@@ -507,8 +507,6 @@ export default {
      */
     startChat(user) {
       this.newChat = false
-
-      console.log(user)
 
       let chat = this.findChatForUser(user)
 
