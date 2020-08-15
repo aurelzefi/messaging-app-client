@@ -8,7 +8,7 @@
         <form @submit.prevent="register">
           <div>
             <label class="block text-sm text-gray-700" for="name">Name</label>
-            <input class="w-full mt-1 px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" :class="{ 'border-red-700': this.errors.name }" id="name" type="text" v-model="form.name">
+            <input class="w-full mt-1 px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" :class="{ 'border-red-700': this.errors.name }" id="name" type="text" v-model="form.name" v-focus>
             <span class="text-xs text-red-700">{{ this.errors.name }}</span>
           </div>
 
@@ -31,7 +31,7 @@
 
           <div class="flex justify-between items-center mt-4 text-sm">
             <button class="py-2 px-4 bg-gray-800 hover:bg-gray-700 rounded text-white outline-none focus:outline-none" type="submit">Register</button>
-            
+
             <div class="text-gray-700">
               Already have an account? <router-link class="px-1 hover:underline" to="login">Login</router-link>
             </div>

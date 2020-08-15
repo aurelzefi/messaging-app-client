@@ -68,9 +68,7 @@ export default {
    * Mount the component.
    */
   mounted() {
-    Notification.requestPermission().then(() => {
-      //
-    })
+    Notification.requestPermission()
 
     this.$bus.$on('user-set', () => {
       this.getChats()
