@@ -50,7 +50,7 @@ Vue.directive('focus', {
   }
 })
 
-Vue.directive('message-inserted', {
+Vue.directive('scroll-messages', {
   inserted: function (el, method) {
     method.value()
   }

@@ -140,7 +140,7 @@
                 </div>
 
                 <div class="flex flex-col px-2 py-1">
-                  <span class="text-sm" v-if="message.content" v-message-inserted="scrollMessages">
+                  <span class="text-sm" v-if="message.content" v-scroll-messages="scrollMessages">
                     {{ message.content }}
                   </span>
 
@@ -150,7 +150,7 @@
                 </div>
               </div>
 
-              <span class="self-end mt-1 text-xs text-gray-700" v-message-inserted="scrollMessages" v-if="isSentAndRead(message)">
+              <span class="self-end mt-1 text-xs text-gray-700" v-scroll-messages="scrollMessages" v-if="isSentAndRead(message)">
                 Read at {{ time(message.read_at) }}
               </span>
             </li>
