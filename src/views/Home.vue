@@ -3,7 +3,7 @@
     <file v-if="activeFile" :file="activeFile" :hide="() => activeFile = null"></file>
     <file-preview v-if="form.files.length" :files="form.files" :hide="clearFiles"></file-preview>
     <new-chat v-if="newChat" :method="startChat" :hide="() => newChat = false"></new-chat>
-    <confirm v-if="modal.show" :data="modal" :hide="() => modal.show = false"></confirm>
+    <confirm v-if="confirm.show" :data="confirm" :hide="() => confirm.show = false"></confirm>
     <errors v-if="Object.keys(errors).length" :errors="errors" :hide="() => errors = {}"></errors>
 
     <div class="w-full h-16 fixed flex z-10">
@@ -135,12 +135,12 @@
 
                 <div class="p-1" v-if="message.files.length">
                   <a class="block cursor-pointer text-center" :class="{ 'mt-1': message.files.indexOf(file) > 0 }" v-for="file in message.files" :key="file.id" @click="activeFile = file">
-                    <img class="inline rounded max-w-full" :src="fileUrl(file)" @load="scrollToMessagesBottom">
+                    <img class="inline rounded max-w-full" :src="fileUrl(file)" @load="scrollMessages">
                   </a>
                 </div>
 
                 <div class="flex flex-col px-2 py-1">
-                  <span class="text-sm" v-if="message.content" v-message-inserted="scrollToMessagesBottom">
+                  <span class="text-sm" v-if="message.content" v-message-inserted="scrollMessages">
                     {{ message.content }}
                   </span>
 
@@ -150,7 +150,7 @@
                 </div>
               </div>
 
-              <span class="self-end mt-1 text-xs text-gray-700" v-message-inserted="scrollToMessagesBottom" v-if="isSentAndRead(message)">
+              <span class="self-end mt-1 text-xs text-gray-700" v-message-inserted="scrollMessages" v-if="isSentAndRead(message)">
                 Read at {{ time(message.read_at) }}
               </span>
             </li>
@@ -199,7 +199,7 @@ export default {
         files: []
       },
 
-      modal: {
+      confirm: {
         show: false,
         title: '',
         body: '',
@@ -214,7 +214,7 @@ export default {
       newChat: false,
       activeMessage: null,
       activeFile: null,
-      scrollCandidate: 0
+      localScroll: 0
     }
   },
 
@@ -283,11 +283,11 @@ export default {
       this.sendMessage()
     })
 
-    ipcRenderer.on('window-open', (e, data) => {
-      let chat = this.findChatForActiveUser()
+    this.getChatOnEnter()
 
-      if (data && chat) {
-        this.getChat(chat)
+    ipcRenderer.on('window-open', (e, open) => {
+      if (open) {
+        this.getChatOnEnter()
       }
     })
   },
@@ -296,7 +296,7 @@ export default {
    * Save the scroll state before destroying the component.
    */
   beforeDestroy() {
-    this.scroll = this.scrollCandidate
+    this.scroll = this.localScroll
   },
 
   methods: {
@@ -304,13 +304,13 @@ export default {
      * Register the scroll state.
      */
     registerScroll() {
-      this.scrollCandidate = this.$refs.messages.scrollTop
+      this.localScroll = this.$refs.messages.scrollTop
     },
 
     /**
-     * Scroll to the bottom of the messages container.
+     * Scroll the messages element.
      */
-    scrollToMessagesBottom() {
+    scrollMessages() {
       let container = this.$refs.messages
 
       if (this.scroll === null) {
@@ -334,26 +334,44 @@ export default {
       this.activeUser = this.chatUser(chat)
 
       if (chat.unread_count > 0) {
-        this.$http.put(`/api/chats/${chat.chat_id}`)
-          .then((response) => {
-            this.messages = response.data
+        this.readChat(chat)
 
-            let message = response.data[response.data.length - 1]
-
-            message.unread_count = 0
-
-            this.updateChat(message)
-
-            this.$bus.$emit('chats-updated')
-          })
-
-          return
+        return
       }
 
       this.$http.get(`/api/chats/${chat.chat_id}`)
         .then(response => {
           this.messages = response.data
         })
+    },
+
+    /**
+     * Read the given chat.
+     */
+    readChat(chat) {
+      this.$http.put(`/api/chats/${chat.chat_id}`)
+        .then((response) => {
+          this.messages = response.data
+
+          let message = response.data[response.data.length - 1]
+
+          message.unread_count = 0
+
+          this.updateChat(message)
+
+          this.$bus.$emit('chats-updated')
+        })
+    },
+
+    /**
+     * Get the active chat on enter.
+     */
+    getChatOnEnter() {
+      let chat = this.findChatForActiveUser()
+
+      if (chat && chat.unread_count > 0) {
+        this.readChat(chat)
+      }
     },
 
     /**
@@ -404,7 +422,7 @@ export default {
 
       if (! chat) {
         this.activeUser = null
-        this.modal.show = false
+        this.confirm.show = false
 
         return
       }
@@ -412,7 +430,7 @@ export default {
       this.$http.delete(`/api/chats/${chat.chat_id}`)
         .then(() => {
           this.activeUser = null
-          this.modal.show = false
+          this.confirm.show = false
 
           this.removeChat(chat)
         })
@@ -424,7 +442,7 @@ export default {
     deleteMessage() {
       this.$http.delete(`/api/messages/${this.activeMessage.id}`)
         .then(() => {
-          this.modal.show = false
+          this.confirm.show = false
 
           this.removeMessage(this.activeMessage)
 
@@ -554,20 +572,20 @@ export default {
      * Open the delete chat modal.
      */
     openDeleteChatModal() {
-      this.modal.show = true
-      this.modal.title = 'Delete Chat'
-      this.modal.body = 'Are you sure you want to delete this chat?'
-      this.modal.method = this.deleteChat
+      this.confirm.show = true
+      this.confirm.title = 'Delete Chat'
+      this.confirm.body = 'Are you sure you want to delete this chat?'
+      this.confirm.method = this.deleteChat
     },
 
     /**
      * Open the delete message modal.
      */
     openDeleteMessageModal() {
-      this.modal.show = true
-      this.modal.title = 'Delete Message'
-      this.modal.body = 'Are you sure you want to delete this message?'
-      this.modal.method = this.deleteMessage
+      this.confirm.show = true
+      this.confirm.title = 'Delete Message'
+      this.confirm.body = 'Are you sure you want to delete this message?'
+      this.confirm.method = this.deleteMessage
     },
 
     /**

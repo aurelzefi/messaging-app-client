@@ -185,7 +185,9 @@ export default {
 
             message.unread_count = chat.unread_count
 
-            this.updateChatsForMessage(message)
+            this.updateChat(chat)
+
+            this.updateBadgeCount()
 
             return
           }
@@ -249,7 +251,7 @@ export default {
      */
     notify(message) {
       new Notification(message.sender.name, {
-        body: `${message.files.length ? '[Image] ' : ''}${message.content ?? ''}`,
+        body: `${message.files.length ? '[Picture] ' : ''}${message.content ?? ''}`,
         icon: this.picture(message.sender)
       })
     },

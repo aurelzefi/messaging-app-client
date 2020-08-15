@@ -1,6 +1,6 @@
 <template>
   <div class="antialiased flex flex-col items-center">
-    <confirm v-if="modal.show" :data="modal" :hide="() => modal.show = false"></confirm>
+    <confirm v-if="confirm.show" :data="confirm" :hide="() => confirm.show = false"></confirm>
 
     <router-link class="fixed top-0 left-0 ml-2 mt-2 p-2 rounded-full hover:bg-gray-200" to="/home">
       <svg viewBox="0 0 20 20" fill="currentColor" class="chevron-left w-8 h-8 text-gray-700"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
@@ -208,7 +208,7 @@ export default {
         success: false
       },
 
-      modal: {
+      confirm: {
         show: false,
         title: '',
         body: '',
@@ -291,10 +291,10 @@ export default {
      * Open the modal to delete the account.
      */
     openDeleteAccountModal() {
-      this.modal.show = true
-      this.modal.title = 'Delete Account'
-      this.modal.body = 'Are you sure you want to delete your account?'
-      this.modal.method = this.deleteAccount
+      this.confirm.show = true
+      this.confirm.title = 'Delete Account'
+      this.confirm.body = 'Are you sure you want to delete your account?'
+      this.confirm.method = this.deleteAccount
     },
 
     /**
