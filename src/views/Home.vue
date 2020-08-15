@@ -382,7 +382,6 @@ export default {
      */
     sendMessage() {
       this.errors = {}
-      this.scroll = null
 
       if (this.form.content.length === 0 && this.form.files.length === 0) {
         return
@@ -399,6 +398,8 @@ export default {
 
       this.$http.post(`/api/messages`, formData)
         .then(response => {
+          this.scroll = null
+
           this.form.content = ''
           this.clearFiles()
 
