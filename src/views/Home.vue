@@ -367,10 +367,11 @@ export default {
      * Reactivate the active chat after it was gone in the background.
      */
     reactivateChat() {
-      this.scroll = null
       let chat = this.findChatForActiveUser()
 
       if (chat && chat.unread_count > 0) {
+        this.scroll = null
+
         this.readChat(chat)
       }
     },
