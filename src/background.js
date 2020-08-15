@@ -20,7 +20,7 @@ protocol.registerSchemesAsPrivileged([
 function createWindow() {
   // Create the browser window.
   win = new BrowserWindow({
-    width: 1400,
+    width: 1300,
     height: 1000,
     minWidth: 650,
     minHeight: 500,
@@ -29,13 +29,8 @@ function createWindow() {
       // Use pluginOptions.nodeIntegration, leave this alone
       // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
       nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION
-    },
-    icon: path.join(__static, 'logo.png')
+    }
   })
-
-  if (process.platform === 'darwin') {
-    app.dock.setIcon(path.join(__static, 'logo.png'));
-  }
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode

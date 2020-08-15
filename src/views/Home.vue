@@ -283,11 +283,11 @@ export default {
       this.sendMessage()
     })
 
-    this.getChatOnEnter()
+    this.reactivateChat()
 
     ipcRenderer.on('window-open', (e, open) => {
       if (open) {
-        this.getChatOnEnter()
+        this.reactivateChat()
       }
     })
   },
@@ -364,9 +364,10 @@ export default {
     },
 
     /**
-     * Get the active chat on enter.
+     * Reactivate the active chat after it was gone in the background.
      */
-    getChatOnEnter() {
+    reactivateChat() {
+      this.scroll = null
       let chat = this.findChatForActiveUser()
 
       if (chat && chat.unread_count > 0) {
