@@ -3,8 +3,6 @@
 </template>
 
 <script>
-import { ipcRenderer } from 'electron'
-
 export default {
   /**
    * The component's data.
@@ -83,9 +81,11 @@ export default {
       this.updateChatsForMessage(message)
     })
 
-    ipcRenderer.on('window-open', (e, data) => {
-      this.windowIsOpen = data
-    })
+    if (window.ipcRenderer) {
+      window.ipcRenderer.on('window-open', (e, data) => {
+        this.windowIsOpen = data
+      })
+    }
   },
 
   methods: {
@@ -262,9 +262,11 @@ export default {
      * Update the badge count.
      */
     updateBadgeCount() {
-      ipcRenderer.send(
-        'chats-updated', this.chats.filter(chat => chat.unread_count > 0).length
-      )
+      if (window.ipcRenderer) {
+        window.ipcRenderer.send(
+          'chats-updated', this.chats.filter(chat => chat.unread_count > 0).length
+        )
+      }
     }
   }
 }

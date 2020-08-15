@@ -179,7 +179,6 @@
 
 <script>
 import _ from 'lodash'
-import { ipcRenderer } from 'electron'
 import Confirm from '../components/Confirm.vue'
 import Errors from  '../components/Errors.vue'
 import File from '../components/File.vue'
@@ -285,11 +284,13 @@ export default {
 
     this.reactivateChat()
 
-    ipcRenderer.on('window-open', (e, open) => {
-      if (open) {
-        this.reactivateChat()
-      }
-    })
+    if (window.ipcRenderer) {
+      window.ipcRenderer.on('window-open', (e, open) => {
+        if (open) {
+          this.reactivateChat()
+        }
+      })
+    }
   },
 
   /**

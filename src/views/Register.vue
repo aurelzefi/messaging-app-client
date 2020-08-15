@@ -42,8 +42,6 @@
 </template>
 
 <script>
-import os from 'os'
-
 export default {
   /**
    * The component's data.
@@ -55,7 +53,7 @@ export default {
         email: '',
         password: '',
         password_confirmation: '',
-        device_name: os.hostname()
+        device_name: this.deviceName()
       },
 
       errors: {}

@@ -5,6 +5,13 @@ import API_URL from './api-url'
 export default {
   methods: {
     /**
+     * Get the device name.
+     */
+    deviceName() {
+      return window.os ? window.os.hostname() : navigator.userAgent
+    },
+
+    /**
      * Format the given errors.
      */
     formatErrors(errors) {
@@ -38,13 +45,13 @@ export default {
       this.$bus.$emit('chats-updated')
 
       localStorage.removeItem('token')
-      
+
       delete this.$http.defaults.headers.Authorization
-      
+
       this.$router.push('/')
     },
 
-    /** 
+    /**
      * Get the URL for the given user's picture.
     */
     picture(user) {
@@ -76,15 +83,15 @@ export default {
       return moment(timestamp).format('YYYY-MM-DD')
     },
 
-    /** 
-     * Get the time from the given timestamp. 
+    /**
+     * Get the time from the given timestamp.
      */
     time(timestamp) {
       return moment(timestamp).format('HH:mm')
     },
 
-    /** 
-     * Get the date and time from the given timestamp. 
+    /**
+     * Get the date and time from the given timestamp.
      */
     dateTime(timestamp) {
       return moment(timestamp).format('YYYY-MM-DD HH:mm')
@@ -124,7 +131,7 @@ export default {
       if (ch) {
         return ch.chat_id === chat.chat_id
       }
-      
+
       return false
     },
 
@@ -135,7 +142,7 @@ export default {
       this.$set(this.chats, this.chats.findIndex(
         chat => chat.chat_id === message.chat_id
       ), message)
-    }, 
+    },
 
     /**
      * Remove the chat for the given message.
