@@ -271,6 +271,7 @@ export default {
    */
   mounted() {
     this.listenForTypings()
+    this.reloadActiveChat()
 
     this.$bus.$on('whisper', (e) => {
       this.whisper(e)
@@ -282,12 +283,10 @@ export default {
       this.sendMessage()
     })
 
-    this.reactivateChat()
-
     if (window.ipcRenderer) {
       window.ipcRenderer.on('window-open', (e, open) => {
         if (open) {
-          this.reactivateChat()
+          this.reloadActiveChat()
         }
       })
     }
@@ -365,9 +364,9 @@ export default {
     },
 
     /**
-     * Reactivate the active chat after it was gone in the background.
+     * Reload the active chat after it was gone in the background.
      */
-    reactivateChat() {
+    reloadActiveChat() {
       let chat = this.findChatForActiveUser()
 
       if (chat && chat.unread_count > 0) {
