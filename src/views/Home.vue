@@ -46,6 +46,7 @@
 
           <div class="flex flex-col ml-3">
             <span class="text-gray-900">{{ activeUser.name }}</span>
+            <span class="text-xs text-gray-700" v-if="isOnline(activeUser) && ! isTyping(activeUser)">Online</span>
             <span class="text-xs text-gray-700" v-if="isTyping(activeUser)">Typing...</span>
           </div>
         </router-link>
@@ -165,7 +166,7 @@
 
     <div class="w-2/3 bottom-0 right-0 h-16 fixed flex items-center px-2 border-t" v-if="activeUser">
       <form class="w-full" @submit.prevent="sendMessage">
-        <input ref="content" class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" type="text" v-model="form.content" v-focus @keyup="whisper" placeholder="Type a message">
+        <input ref="content" class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" type="text" v-model="form.content" v-focus @keyup="whisperTyping" placeholder="Type a message">
       </form>
     </div>
 
@@ -263,6 +264,10 @@ export default {
       set(value) {
         this.$bus.scroll = value
       }
+    },
+
+    onlineUsers() {
+      return this.$bus.onlineUsers
     }
   },
 
@@ -273,8 +278,8 @@ export default {
     this.listenForTypings()
     this.reloadActiveChat()
 
-    this.$bus.$on('whisper', (e) => {
-      this.whisper(e)
+    this.$bus.$on('typing', (e) => {
+      this.whisperTyping(e)
     })
 
     this.$bus.$on('preview-done', (data) => {
@@ -508,7 +513,7 @@ export default {
     /**
      * Send a whisper that the user is typing.
      */
-    whisper(e) {
+    whisperTyping(e) {
       this.$echo.private(`typing.${this.activeUser.id}`)
         .whisper('typing', {
           user: this.$bus.user,
@@ -546,6 +551,13 @@ export default {
      */
     isTyping(user) {
       return this.typings.includes(user.id)
+    },
+
+    /**
+     * Determine if the given user is online.
+     */
+    isOnline(user) {
+      return this.onlineUsers.findIndex(u => u.id === user.id) > -1
     },
 
     /**

@@ -31,6 +31,16 @@ export default {
       }
     },
 
+    onlineUsers: {
+      get() {
+        return this.$bus.onlineUsers
+      },
+
+      set(value) {
+        this.$bus.onlineUsers = value
+      }
+    },
+
     chats: {
       get() {
         return this.$bus.chats
@@ -71,6 +81,7 @@ export default {
     this.$bus.$on('user-set', () => {
       this.getChats()
       this.listenForMessages()
+      this.joinOnline()
     })
 
     this.$bus.$on('chats-updated', () => {
@@ -84,6 +95,12 @@ export default {
     if (window.ipcRenderer) {
       window.ipcRenderer.on('window-open', (e, data) => {
         this.windowIsOpen = data
+
+        if (this.windowIsOpen) {
+          this.joinOnline()
+        } else {
+          this.$echo.leave('online')
+        }
       })
     }
   },
@@ -256,6 +273,24 @@ export default {
         body: `${message.files.length ? '[Picture] ' : ''}${message.content ?? ''}`,
         icon: this.picture(message.sender)
       })
+    },
+
+    /**
+     * Join the online channel.
+     */
+    joinOnline() {
+      this.$echo.join('online')
+        .here((users) => {
+          this.onlineUsers = users
+        })
+        .joining((user) => {
+          this.onlineUsers.push(user)
+        })
+        .leaving((user) => {
+          this.onlineUsers.splice(
+            this.onlineUsers.findIndex(u => u.id === user.id), 1
+          )
+        })
     },
 
     /**

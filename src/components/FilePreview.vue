@@ -9,7 +9,7 @@
 
       <div class="mt-4 w-full">
         <form class="flex" @submit.prevent="send">
-          <input class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" type="text" v-model="form.content" v-focus @keyup="whisper" placeholder="Type a message">
+          <input class="w-full px-3 py-2 border border-gray-300 rounded outline-none focus:border-gray-400" type="text" v-model="form.content" v-focus @keyup="whisperTyping" placeholder="Type a message">
 
           <button class="ml-2 py-2 px-4 bg-white hover:bg-gray-200 rounded focus:outline-none" type="submit">
             <svg viewBox="0 0 20 20" fill="currentColor" class="chevron-double-right w-6 h-6 text-gray-700"><path fill-rule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd"></path><path fill-rule="evenodd" d="M4.293 15.707a1 1 0 010-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
@@ -58,10 +58,10 @@ export default {
 
   methods: {
     /**
-     * Emit the event on whisper.
+     * Emit the event when the user starts typing.
      */
-    whisper(e) {
-      this.$bus.$emit('whisper', e)
+    whisperTyping(e) {
+      this.$bus.$emit('typing', e)
     },
 
     /**

@@ -34,11 +34,13 @@ export default {
      * Handle the after logout actions.
      */
     handleAfterLogout() {
+      this.$echo.leave('online')
       this.$echo.leave(`typing.${this.$bus.user.id}`)
       this.$echo.leave(`App.User.${this.$bus.user.id}`)
 
       this.$bus.user = null
       this.$bus.activeUser = null
+      this.$bus.onlineUsers = []
       this.$bus.chats = []
       this.$bus.messages = []
 
@@ -88,13 +90,6 @@ export default {
      */
     time(timestamp) {
       return moment(timestamp).format('HH:mm')
-    },
-
-    /**
-     * Get the date and time from the given timestamp.
-     */
-    dateTime(timestamp) {
-      return moment(timestamp).format('YYYY-MM-DD HH:mm')
     },
 
     /**
