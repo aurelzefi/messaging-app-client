@@ -30,8 +30,8 @@ window.Pusher = Pusher
 Vue.prototype.$echo = new Echo({
   broadcaster: 'pusher',
   key: process.env.VUE_APP_PUSHER_APP_KEY,
-  forceTLS: true,
-  wsHost: 'localhost',
+  forceTLS: false,
+  wsHost: process.env.VUE_APP_WS_HOST,
   wsPort: 6001,
   disableStats: true,
   authEndpoint: `${process.env.VUE_APP_API_URL}/api/broadcasting/auth`,
