@@ -4,7 +4,6 @@ import Echo from 'laravel-echo'
 import Pusher from 'pusher-js'
 import App from './App.vue'
 import router from './router'
-import API_URL from './api-url'
 import mixin from './mixin'
 
 Vue.config.productionTip = false
@@ -13,7 +12,7 @@ if (localStorage.getItem('token')) {
   axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`
 }
 
-Vue.prototype.$http = axios.create({ baseURL: API_URL })
+Vue.prototype.$http = axios.create({ baseURL: process.env.VUE_APP_API_URL })
 
 Vue.prototype.$bus = new Vue({
   data: {
@@ -30,12 +29,12 @@ window.Pusher = Pusher
 
 Vue.prototype.$echo = new Echo({
   broadcaster: 'pusher',
-  key: 'key',
-  forceTLS: false,
+  key: process.env.VUE_APP_PUSHER_APP_KEY,
+  forceTLS: true,
   wsHost: 'localhost',
   wsPort: 6001,
   disableStats: true,
-  authEndpoint: `${API_URL}/api/broadcasting/auth`,
+  authEndpoint: `${process.env.VUE_APP_API_URL}/api/broadcasting/auth`,
   auth: {
     headers: {
       Authorization: `Bearer ${localStorage.getItem('token')}`

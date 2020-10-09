@@ -1,6 +1,5 @@
 import _ from 'lodash'
 import moment from 'moment'
-import API_URL from './api-url'
 
 export default {
   methods: {
@@ -58,7 +57,7 @@ export default {
     */
     picture(user) {
       if (user.picture) {
-        return `${API_URL}/${user.picture}`
+        return `${process.env.VUE_APP_API_URL}/${user.picture}`
       }
 
       return '/user.png'
@@ -68,7 +67,7 @@ export default {
      * Get the URL for the given file.
      */
     fileUrl(file) {
-      return `${API_URL}/api/files/${file.id}?api_token=${localStorage.getItem('token')}`
+      return `${process.env.VUE_APP_API_URL}/api/files/${file.id}?api_token=${localStorage.getItem('token')}`
     },
 
     /**
