@@ -1,6 +1,6 @@
 {
-  "name": "electron-messaging-client",
-  "productName": "Electron App",
+  "name": "messaging-app-client",
+  "productName": "Messaging App Client",
   "version": "0.1.0",
   "private": true,
   "scripts": {
