@@ -9,7 +9,7 @@ module.exports = {
     config
       .plugin('html')
       .tap(args => {
-        args[0].title = 'Electron App'
+        args[0].title = 'Messaging App Client'
         return args
       })
   }
