@@ -1,6 +1,8 @@
 # Messaging App Client
 
-## Project setup
+The desktop and web client for a messaging app.
+
+## Setup
 ```
 npm install
 ```
