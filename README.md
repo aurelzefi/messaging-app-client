@@ -7,6 +7,16 @@ The desktop and web client for a messaging app.
 npm install
 ```
 
+##Configuration
+
+Create a `.env.development.local` environment file with the following values:
+
+```dotenv
+VUE_APP_API_URL=your-api-endpoint
+VUE_APP_PUSHER_APP_KEY=key
+VUE_APP_WS_HOST=your-websockets-host
+```
+
 ### Compiles and hot-reloads for development as a web app
 ```
 npm run serve
@@ -34,4 +44,4 @@ npm run electron:build
 
 ### Demo
 
-A video demo of this application can be viewed [here]().
+A video demo of this application can be found [here]().
