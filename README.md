@@ -7,7 +7,7 @@ The desktop and web client for a messaging app.
 npm install
 ```
 
-## Configuration
+### Configuration
 
 Create a `.env.development.local` environment file with the following values:
 
