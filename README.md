@@ -44,4 +44,4 @@ npm run electron:build
 
 ### Demo
 
-A video demo of this application can be found [here]().
+A video demo of this application can be found [here](https://drive.google.com/file/d/1G0NZVWJtFT6yWCDJDBD2DmPkLSnx-JvA/view?usp=sharing).
